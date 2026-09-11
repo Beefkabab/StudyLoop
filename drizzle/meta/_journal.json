@@ -1,0 +1,27 @@
+{
+  "version": "7",
+  "dialect": "mysql",
+  "entries": [
+    {
+      "idx": 0,
+      "version": "5",
+      "when": 1788919401741,
+      "tag": "0000_aberrant_sumo",
+      "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "5",
+      "when": 1788919433180,
+      "tag": "0001_small_lorna_dane",
+      "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "5",
+      "when": 1788919479731,
+      "tag": "0002_silent_marrow",
+      "breakpoints": true
+    }
+  ]
+}
