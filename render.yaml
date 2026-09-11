@@ -1,6 +1,6 @@
 services:
   - type: web
-    name: studyloop-web
+    name: studyloop-health
     runtime: node
     plan: free
     buildCommand: corepack enable && pnpm install && pnpm build
