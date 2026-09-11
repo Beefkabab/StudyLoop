@@ -334,6 +334,99 @@ export const appRouter = router({
         return { success: true, reminderId: id };
       }),
 
+    checkEligibility: publicProcedure
+      .input(
+        z.object({
+          studyId: z.number(),
+          answers: z.record(z.string(), z.string()),
+        })
+      )
+      .mutation(async ({ input }) => {
+        const questions = await getStudyScreenerQuestions(input.studyId);
+        let passed = true;
+        const disqualifications: string[] = [];
+
+        for (const q of questions) {
+          const userAnswer = (input.answers[q.id.toString()] || "").trim().toLowerCase();
+          const expected = q.expectedAnswer.trim().toLowerCase();
+
+          if (q.isDisqualifying && userAnswer && userAnswer !== expected) {
+            passed = false;
+            disqualifications.push(
+              q.disqualificationReason || `Criteria not met on question: ${q.questionText}`
+            );
+          }
+        }
+
+        const qualificationScore = passed ? 100 : Math.max(20, 100 - disqualifications.length * 30);
+        return {
+          passed,
+          disqualifications,
+          qualificationScore,
+        };
+      }),
+
+    quickApply: publicProcedure
+      .input(
+        z.object({
+          studyId: z.number(),
+          answers: z.record(z.string(), z.string()),
+          fullName: z.string().min(2),
+          email: z.string().email(),
+          phone: z.string().optional(),
+          age: z.number().min(18).max(110).default(35),
+          city: z.string().default("Durham"),
+          state: z.string().default("NC"),
+          zipCode: z.string().optional(),
+        })
+      )
+      .mutation(async ({ input, ctx }) => {
+        const profileKey = `vol_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`;
+        const profileId = await upsertParticipantProfile({
+          profileKey,
+          userId: ctx.user?.id ?? null,
+          fullName: input.fullName,
+          email: input.email,
+          phone: input.phone || "",
+          age: input.age,
+          gender: "prefer_not_to_say",
+          educationLevel: "bachelors",
+          livingEnvironment: "suburban",
+          city: input.city,
+          state: input.state,
+          zipCode: input.zipCode || "27701",
+          travelDistanceMiles: 30,
+          isHealthyVolunteer: true,
+          conditions: [],
+          medications: [],
+          hasRecentAntibiotics: false,
+          smokerStatus: "never",
+        });
+
+        const result = await submitApplicationWithScreener({
+          studyId: input.studyId,
+          profileId,
+          answers: input.answers,
+        });
+
+        if (result.passed) {
+          await addStudyReminder({
+            applicationId: result.applicationId,
+            profileKey,
+            title: "Study Coordinator Outreach & Consent Review",
+            scheduledFor: new Date(Date.now() + 2 * 24 * 60 * 60 * 1000),
+            channel: "in_app",
+            notes: "Expect a coordinator call/email to confirm your screening answers and walk through IRB informed consent.",
+          });
+        }
+
+        return {
+          ...result,
+          profileKey,
+          fullName: input.fullName,
+        };
+      }),
+
     submit: publicProcedure
       .input(
         z.object({

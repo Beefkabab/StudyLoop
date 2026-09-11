@@ -91,19 +91,26 @@ export default function BrowseStudies() {
               </div>
             </div>
           ) : (
-            <div className="mt-6 flex flex-wrap items-center justify-between gap-4 p-4 rounded-xl bg-amber-50/80 border border-amber-200">
-              <div className="flex items-center gap-3 text-amber-900">
-                <Sparkles className="h-5 w-5 text-amber-600 shrink-0" />
+            <div className="mt-6 flex flex-wrap items-center justify-between gap-4 p-4 rounded-xl bg-gradient-to-r from-sky-50 to-teal-50 border border-sky-200">
+              <div className="flex items-center gap-3 text-slate-800">
+                <Sparkles className="h-5 w-5 text-sky-600 shrink-0" />
                 <div className="text-xs sm:text-sm">
-                  <span className="font-bold">Want accurate match scores and 1-click applications? </span>
-                  Create your universal profile once to get personalized study recommendations.
+                  <span className="font-bold text-slate-900">Zero-Barrier Guest Access: </span>
+                  You can explore full protocols and complete 2-minute pre-screeners without signing in. Or create a Universal Profile once for automatic match ranking.
                 </div>
               </div>
-              <Link href="/profile">
-                <Button size="sm" className="bg-amber-600 hover:bg-amber-700 text-white text-xs font-semibold">
-                  Create Profile Now
-                </Button>
-              </Link>
+              <div className="flex items-center gap-2">
+                <Link href="/how-it-works">
+                  <Button variant="outline" size="sm" className="bg-white text-xs text-slate-700 hover:text-sky-600">
+                    How It Works
+                  </Button>
+                </Link>
+                <Link href="/profile">
+                  <Button size="sm" className="bg-sky-600 hover:bg-sky-700 text-white text-xs font-semibold">
+                    Set Up Profile
+                  </Button>
+                </Link>
+              </div>
             </div>
           )}
         </div>

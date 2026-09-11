@@ -44,14 +44,14 @@ export default function Home() {
               </p>
 
               <div className="flex flex-col sm:flex-row gap-3 mt-8">
-                <Link href="/profile"><Button className="w-full sm:w-auto bg-sky-600 hover:bg-sky-700 text-white h-11 px-5 rounded-xl font-bold text-sm shadow-lg shadow-sky-600/20">Create your free profile <ArrowRight className="h-4 w-4" /></Button></Link>
-                <Link href="/browse"><Button variant="outline" className="w-full sm:w-auto bg-white border-slate-300 hover:bg-slate-50 h-11 px-5 rounded-xl font-bold text-sm text-slate-800">Explore paid studies</Button></Link>
+                <Link href="/browse"><Button className="w-full sm:w-auto bg-sky-600 hover:bg-sky-700 text-white h-11 px-5 rounded-xl font-bold text-sm shadow-lg shadow-sky-600/20">Explore paid studies <ArrowRight className="h-4 w-4 ml-1" /></Button></Link>
+                <Link href="/how-it-works"><Button variant="outline" className="w-full sm:w-auto bg-white border-slate-300 hover:bg-slate-50 h-11 px-5 rounded-xl font-bold text-sm text-slate-800">How it works</Button></Link>
               </div>
 
               <div className="flex flex-wrap gap-x-5 gap-y-2 mt-7 text-xs text-slate-500 font-medium">
                 <span className="flex items-center gap-1.5"><BadgeCheck className="h-4 w-4 text-emerald-600" /> Free for participants</span>
-                <span className="flex items-center gap-1.5"><ShieldCheck className="h-4 w-4 text-emerald-600" /> Transparent before applying</span>
-                <span className="flex items-center gap-1.5"><CircleDollarSign className="h-4 w-4 text-emerald-600" /> Clear compensation</span>
+                <span className="flex items-center gap-1.5"><ShieldCheck className="h-4 w-4 text-emerald-600" /> No sign-in wall to screen</span>
+                <span className="flex items-center gap-1.5"><CircleDollarSign className="h-4 w-4 text-emerald-600" /> Transparent stipends</span>
               </div>
             </div>
 
@@ -69,9 +69,62 @@ export default function Home() {
                   <div className="grid grid-cols-3 gap-2 mt-4"><HeroInfo icon={<CircleDollarSign className="h-3.5 w-3.5" />} label="Compensation" value="$650" /><HeroInfo icon={<Clock3 className="h-3.5 w-3.5" />} label="Time" value="3 visits" /><HeroInfo icon={<MapPin className="h-3.5 w-3.5" />} label="Location" value="Durham, NC" /></div>
                   <div className="mt-3 bg-emerald-100/70 border border-emerald-200 text-emerald-900 p-2 rounded-lg text-[10px] leading-relaxed"><CheckCircle2 className="inline h-3 w-3 mr-1 text-emerald-600" /><strong>Why you matched:</strong> Healthy volunteer • Age range • Rural representation priority</div>
                 </div>
-                <div className="mt-3 rounded-xl bg-slate-50 border border-slate-100 p-3 flex justify-between items-center"><div><p className="text-xs font-bold text-slate-800">Ready to explore?</p><p className="text-[10px] text-slate-500">A 2-minute screener unlocks handoff.</p></div><div className="h-8 px-3 rounded-lg bg-slate-900 text-white flex items-center text-[10px] font-bold">Review & Apply</div></div>
+                <div className="mt-3 rounded-xl bg-slate-50 border border-slate-100 p-3 flex justify-between items-center"><div><p className="text-xs font-bold text-slate-800">Ready to explore?</p><p className="text-[10px] text-slate-500">A 2-minute screener unlocks handoff.</p></div><Link href="/study/healthy-aging-sensory-resilience-study"><div className="h-8 px-3 rounded-lg bg-slate-900 text-white flex items-center text-[10px] font-bold cursor-pointer hover:bg-slate-800">Review & Apply</div></Link></div>
               </div>
               <div className="absolute -bottom-6 -left-6 hidden sm:flex rounded-xl border border-slate-200 bg-white shadow-lg p-3 items-center gap-2.5 rotate-[-4deg]"><div className="h-8 w-8 rounded-full bg-amber-100 text-amber-700 flex items-center justify-center"><CircleDollarSign className="h-4 w-4" /></div><div><p className="text-[10px] text-slate-400">Paid research</p><p className="text-xs font-extrabold text-slate-900">$250–$1,850+</p></div></div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* 4-Step Chain of Actions Banner */}
+      <section className="border-b border-slate-200/80 bg-white py-12">
+        <div className="container">
+          <div className="flex flex-col md:flex-row items-start md:items-end justify-between gap-4 mb-8">
+            <div>
+              <Badge variant="outline" className="bg-sky-50 text-sky-700 border-sky-200 text-xs font-semibold">
+                Friction-Free Chain of Actions
+              </Badge>
+              <h2 className="text-2xl sm:text-3xl font-extrabold text-slate-950 mt-1.5">
+                How Participants Get Matched & Paid
+              </h2>
+            </div>
+            <Link href="/how-it-works" className="text-xs font-bold text-sky-600 hover:text-sky-700 flex items-center gap-1">
+              Read the complete guide <ArrowRight className="h-3.5 w-3.5" />
+            </Link>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            <div className="rounded-xl bg-slate-50 border border-slate-200 p-4 space-y-2 relative overflow-hidden">
+              <span className="text-[10px] font-bold text-sky-600 uppercase tracking-wider">Step 01</span>
+              <h3 className="font-extrabold text-sm text-slate-900">Browse Transparently</h3>
+              <p className="text-xs text-slate-500 leading-relaxed">
+                Filter by pay ($250–$1,850+), visits, and distance without signing in or providing medical records upfront.
+              </p>
+            </div>
+
+            <div className="rounded-xl bg-emerald-50/70 border border-emerald-200 p-4 space-y-2 relative overflow-hidden">
+              <span className="text-[10px] font-bold text-emerald-600 uppercase tracking-wider">Step 02</span>
+              <h3 className="font-extrabold text-sm text-slate-900">2-Min Pre-Screener</h3>
+              <p className="text-xs text-slate-600 leading-relaxed">
+                Answer 3–4 protocol questions right on the study page. Get instant qualification feedback with your match score.
+              </p>
+            </div>
+
+            <div className="rounded-xl bg-amber-50/70 border border-amber-200 p-4 space-y-2 relative overflow-hidden">
+              <span className="text-[10px] font-bold text-amber-600 uppercase tracking-wider">Step 03</span>
+              <h3 className="font-extrabold text-sm text-slate-900">Qualified Site Handoff</h3>
+              <p className="text-xs text-slate-600 leading-relaxed">
+                Qualified applicants submit contact info in 30 seconds. A research coordinator reaches out in 24–48 hours.
+              </p>
+            </div>
+
+            <div className="rounded-xl bg-purple-50/70 border border-purple-200 p-4 space-y-2 relative overflow-hidden">
+              <span className="text-[10px] font-bold text-purple-600 uppercase tracking-wider">Step 04</span>
+              <h3 className="font-extrabold text-sm text-slate-900">Visit & Get Compensated</h3>
+              <p className="text-xs text-slate-600 leading-relaxed">
+                Complete your visit under full IRB informed consent. Guaranteed stipends paid directly to you.
+              </p>
             </div>
           </div>
         </div>

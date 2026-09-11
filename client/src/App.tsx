@@ -12,6 +12,10 @@ import UniversalProfile from "@/pages/UniversalProfile";
 import ParticipantDashboard from "@/pages/ParticipantDashboard";
 import Login from "@/pages/Login";
 import InstitutionLogin from "@/pages/InstitutionLogin";
+import HowItWorks from "@/pages/HowItWorks";
+import FAQ from "@/pages/FAQ";
+import TrustPrivacy from "@/pages/TrustPrivacy";
+import AboutUs from "@/pages/AboutUs";
 import { Route, Switch, useLocation } from "wouter";
 import ErrorBoundary from "./components/ErrorBoundary";
 import { ThemeProvider } from "./contexts/ThemeContext";
@@ -21,6 +25,12 @@ function Router() {
     <Switch>
       <Route path="/" component={Home} />
       <Route path="/browse" component={BrowseStudies} />
+      <Route path="/how-it-works" component={HowItWorks} />
+      <Route path="/faq" component={FAQ} />
+      <Route path="/trust" component={TrustPrivacy} />
+      <Route path="/privacy" component={TrustPrivacy} />
+      <Route path="/about" component={AboutUs} />
+      <Route path="/about-us" component={AboutUs} />
       <Route path="/profile" component={UniversalProfile} />
       <Route path="/dashboard" component={ParticipantDashboard} />
       <Route path="/login" component={Login} />

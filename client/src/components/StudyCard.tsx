@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Link } from "wouter";
 import { 
   DollarSign, 
@@ -56,7 +56,21 @@ const studyTypeLabels: Record<string, { label: string; color: string }> = {
 
 export function StudyCard({ study }: StudyCardProps) {
   const [isSaved, setIsSaved] = useState(false);
-  const profileKey = typeof window !== "undefined" ? localStorage.getItem("studyloop_profile_key") || "demo_profile_rural_male" : "";
+  const [profileKey, setProfileKey] = useState("");
+
+  useEffect(() => {
+    const key = localStorage.getItem("studyloop_profile_key") || "";
+    setProfileKey(key);
+
+    try {
+      const guestSaved: number[] = JSON.parse(localStorage.getItem("studyloop_saved_ids") || "[]");
+      if (guestSaved.includes(study.id)) {
+        setIsSaved(true);
+      }
+    } catch {
+      // ignore
+    }
+  }, [study.id]);
 
   const toggleSaveMutation = trpc.saved.toggle.useMutation({
     onSuccess: (data) => {
@@ -70,7 +84,26 @@ export function StudyCard({ study }: StudyCardProps) {
   const handleToggleSave = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    toggleSaveMutation.mutate({ profileKey, studyId: study.id });
+
+    if (profileKey) {
+      toggleSaveMutation.mutate({ profileKey, studyId: study.id });
+    } else {
+      // Guest bookmarking
+      const nextSaved = !isSaved;
+      setIsSaved(nextSaved);
+      try {
+        const guestSaved: number[] = JSON.parse(localStorage.getItem("studyloop_saved_ids") || "[]");
+        const updated = nextSaved
+          ? Array.from(new Set([...guestSaved, study.id]))
+          : guestSaved.filter((id) => id !== study.id);
+        localStorage.setItem("studyloop_saved_ids", JSON.stringify(updated));
+      } catch {
+        // ignore
+      }
+      toast.success(nextSaved ? "Study bookmarked!" : "Bookmark removed", {
+        description: nextSaved ? "Saved to this device. Create a profile anytime to sync." : undefined,
+      });
+    }
   };
 
   const typeConfig = studyTypeLabels[study.studyType] || {
