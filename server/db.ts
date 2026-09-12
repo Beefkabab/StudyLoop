@@ -36,7 +36,25 @@ export async function getDb() {
 }
 
 export function hashPassword(password: string): string {
-  return crypto.createHash("sha256").update(password + (process.env.JWT_SECRET || "studyloop_salt")).digest("hex");
+  const salt = crypto.randomBytes(16).toString("hex");
+  const derivedKey = crypto.scryptSync(password, salt, 64);
+  return `${salt}:${derivedKey.toString("hex")}`;
+}
+
+export function verifyPassword(password: string, storedHash: string): boolean {
+  if (!storedHash) return false;
+  if (!storedHash.includes(":")) {
+    const legacyHash = crypto
+      .createHash("sha256")
+      .update(password + (process.env.JWT_SECRET || "studyloop_salt"))
+      .digest("hex");
+    return crypto.timingSafeEqual(Buffer.from(legacyHash), Buffer.from(storedHash));
+  }
+  const [salt, key] = storedHash.split(":");
+  const derivedKey = crypto.scryptSync(password, salt, 64);
+  const keyBuffer = Buffer.from(key, "hex");
+  if (derivedKey.length !== keyBuffer.length) return false;
+  return crypto.timingSafeEqual(derivedKey, keyBuffer);
 }
 
 export async function upsertUser(user: InsertUser): Promise<void> {
@@ -117,8 +135,7 @@ export async function authenticateLocalUser(username: string, passwordPlain: str
   if (!db) return undefined;
   const user = await getUserByUsername(username);
   if (!user || !user.passwordHash) return undefined;
-  const hash = hashPassword(passwordPlain);
-  if (user.passwordHash !== hash) return undefined;
+  if (!verifyPassword(passwordPlain, user.passwordHash)) return undefined;
   return user;
 }
 
@@ -500,10 +517,14 @@ export async function submitApplicationWithScreener(data: {
   const disqualifications: string[] = [];
 
   for (const q of questions) {
-    const userAnswer = (data.answers[q.id.toString()] || "").trim().toLowerCase();
+    const rawAnswer = data.answers[q.id.toString()];
+    const userAnswer = (rawAnswer || "").trim().toLowerCase();
     const expected = q.expectedAnswer.trim().toLowerCase();
 
-    if (q.isDisqualifying && userAnswer && userAnswer !== expected) {
+    if (!rawAnswer || userAnswer === "") {
+      passed = false;
+      disqualifications.push(`Missing required response for question: ${q.questionText}`);
+    } else if (q.isDisqualifying && userAnswer !== expected) {
       passed = false;
       disqualifications.push(
         q.disqualificationReason || `Disqualified on question: ${q.questionText}`

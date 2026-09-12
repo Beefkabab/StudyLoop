@@ -4,6 +4,7 @@ services:
     runtime: node
     plan: free
     buildCommand: corepack enable && pnpm install && pnpm build
+    preDeployCommand: corepack enable && pnpm db:migrate
     startCommand: node dist/index.js
     healthCheckPath: /
     envVars:

@@ -138,7 +138,17 @@ export const appRouter = router({
         const study = await getStudyBySlug(input.slug);
         if (!study) return null;
 
-        const questions = await getStudyScreenerQuestions(study.id);
+        const rawQuestions = await getStudyScreenerQuestions(study.id);
+        // Data minimization: Return participant-safe question DTO without expected answers or disqualification rules
+        const questions = rawQuestions.map((q) => ({
+          id: q.id,
+          studyId: q.studyId,
+          orderIndex: q.orderIndex,
+          questionText: q.questionText,
+          explanation: q.explanation,
+          questionType: q.questionType,
+          options: q.options,
+        }));
 
         let matchResult = null;
         if (input.profileKey) {
@@ -347,10 +357,14 @@ export const appRouter = router({
         const disqualifications: string[] = [];
 
         for (const q of questions) {
-          const userAnswer = (input.answers[q.id.toString()] || "").trim().toLowerCase();
+          const rawAnswer = input.answers[q.id.toString()];
+          const userAnswer = (rawAnswer || "").trim().toLowerCase();
           const expected = q.expectedAnswer.trim().toLowerCase();
 
-          if (q.isDisqualifying && userAnswer && userAnswer !== expected) {
+          if (!rawAnswer || userAnswer === "") {
+            passed = false;
+            disqualifications.push(`Missing required response for question: ${q.questionText}`);
+          } else if (q.isDisqualifying && userAnswer !== expected) {
             passed = false;
             disqualifications.push(
               q.disqualificationReason || `Criteria not met on question: ${q.questionText}`
