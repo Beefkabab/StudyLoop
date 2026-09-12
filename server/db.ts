@@ -20,6 +20,7 @@ import {
   ParticipantProfile,
 } from "../drizzle/schema";
 import { ENV } from "./_core/env";
+import { DEMO_STUDIES, DEMO_SCREENER_QUESTIONS } from "./demoData";
 
 let _db: ReturnType<typeof drizzle> | null = null;
 
@@ -176,58 +177,103 @@ export async function getAllStudies(options?: {
   locationType?: string;
 }) {
   const db = await getDb();
-  if (!db) return [];
+  let result: Study[] = [];
 
-  const conditions = [];
+  if (db) {
+    try {
+      const conditions = [];
 
-  if (options?.studyType && options.studyType !== "all") {
-    conditions.push(eq(studies.studyType, options.studyType as any));
+      if (options?.studyType && options.studyType !== "all") {
+        conditions.push(eq(studies.studyType, options.studyType as any));
+      }
+
+      if (options?.locationType && options.locationType !== "all") {
+        conditions.push(eq(studies.locationType, options.locationType as any));
+      }
+
+      if (options?.isHealthyOnly) {
+        conditions.push(eq(studies.healthyVolunteersAccepted, true));
+      }
+
+      if (options?.search && options.search.trim()) {
+        const q = `%${options.search.trim().toLowerCase()}%`;
+        conditions.push(
+          or(
+            ilike(studies.title, q),
+            ilike(studies.summary, q),
+            ilike(studies.sponsorName, q),
+            ilike(studies.city, q)
+          )
+        );
+      }
+
+      const query = db
+        .select()
+        .from(studies)
+        .orderBy(desc(studies.isFeatured), desc(studies.isSponsored), desc(studies.createdAt));
+
+      if (conditions.length > 0) {
+        result = await query.where(and(...conditions));
+      } else {
+        result = await query;
+      }
+    } catch (err) {
+      console.warn("[Database] Query failed, falling back to demo catalog:", err);
+    }
   }
 
-  if (options?.locationType && options.locationType !== "all") {
-    conditions.push(eq(studies.locationType, options.locationType as any));
+  // Seamless fallback to demo studies when DB is empty or unavailable (e.g. Render demo deployment)
+  if (!result || result.length === 0) {
+    let filtered = [...DEMO_STUDIES];
+    if (options?.studyType && options.studyType !== "all") {
+      filtered = filtered.filter((s) => s.studyType === options.studyType);
+    }
+    if (options?.locationType && options.locationType !== "all") {
+      filtered = filtered.filter((s) => s.locationType === options.locationType);
+    }
+    if (options?.isHealthyOnly) {
+      filtered = filtered.filter((s) => s.healthyVolunteersAccepted);
+    }
+    if (options?.search && options.search.trim()) {
+      const q = options.search.trim().toLowerCase();
+      filtered = filtered.filter(
+        (s) =>
+          s.title.toLowerCase().includes(q) ||
+          s.summary.toLowerCase().includes(q) ||
+          s.city.toLowerCase().includes(q) ||
+          s.sponsorName.toLowerCase().includes(q)
+      );
+    }
+    result = filtered;
   }
 
-  if (options?.isHealthyOnly) {
-    conditions.push(eq(studies.healthyVolunteersAccepted, true));
-  }
-
-  if (options?.search && options.search.trim()) {
-    const q = `%${options.search.trim().toLowerCase()}%`;
-    conditions.push(
-      or(
-        ilike(studies.title, q),
-        ilike(studies.summary, q),
-        ilike(studies.sponsorName, q),
-        ilike(studies.city, q)
-      )
-    );
-  }
-
-  const query = db
-    .select()
-    .from(studies)
-    .orderBy(desc(studies.isFeatured), desc(studies.isSponsored), desc(studies.createdAt));
-
-  if (conditions.length > 0) {
-    return await query.where(and(...conditions));
-  }
-
-  return await query;
+  return result;
 }
 
 export async function getStudyBySlug(slug: string) {
   const db = await getDb();
-  if (!db) return undefined;
-  const rows = await db.select().from(studies).where(eq(studies.slug, slug)).limit(1);
-  return rows[0];
+  if (db) {
+    try {
+      const rows = await db.select().from(studies).where(eq(studies.slug, slug)).limit(1);
+      if (rows.length > 0) return rows[0];
+    } catch (e) {
+      console.warn("[Database] getStudyBySlug error, using fallback:", e);
+    }
+  }
+  return DEMO_STUDIES.find((s) => s.slug === slug);
 }
 
 export async function getStudyById(id: number) {
   const db = await getDb();
-  if (!db) return undefined;
-  const rows = await db.select().from(studies).where(eq(studies.id, id)).limit(1);
-  return rows[0];
+  if (db) {
+    try {
+      const rows = await db.select().from(studies).where(eq(studies.id, id)).limit(1);
+      if (rows.length > 0) return rows[0];
+    } catch (e) {
+      console.warn("[Database] getStudyById error, using fallback:", e);
+    }
+  }
+  return DEMO_STUDIES.find((s) => s.id === id);
 }
 
 export async function createStudyWithScreeners(data: {
@@ -270,12 +316,19 @@ export async function updateStudy(studyId: number, data: Partial<InsertStudy>) {
 
 export async function getStudyScreenerQuestions(studyId: number) {
   const db = await getDb();
-  if (!db) return [];
-  return await db
-    .select()
-    .from(screenerQuestions)
-    .where(eq(screenerQuestions.studyId, studyId))
-    .orderBy(screenerQuestions.orderIndex);
+  if (db) {
+    try {
+      const rows = await db
+        .select()
+        .from(screenerQuestions)
+        .where(eq(screenerQuestions.studyId, studyId))
+        .orderBy(screenerQuestions.orderIndex);
+      if (rows && rows.length > 0) return rows;
+    } catch (e) {
+      console.warn("[Database] getStudyScreenerQuestions error, using fallback:", e);
+    }
+  }
+  return DEMO_SCREENER_QUESTIONS[studyId] || [];
 }
 
 /* ==================== PARTICIPANT PROFILES ==================== */
