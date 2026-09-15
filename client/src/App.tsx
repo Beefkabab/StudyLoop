@@ -2,6 +2,7 @@ import { Toaster } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { Navbar, Footer } from "@/components/Navbar";
 import { MobileBottomNav } from "@/components/MobileBottomNav";
+import { VideoDemoSwitcher } from "@/components/VideoDemoSwitcher";
 import NotFound from "@/pages/NotFound";
 import BrowseStudies from "@/pages/BrowseStudies";
 import ForInstitutions from "@/pages/ForInstitutions";
@@ -58,6 +59,7 @@ function AppShell() {
       </main>
       {!isInstitutionalRoute && <Footer />}
       {!isInstitutionalRoute && <MobileBottomNav />}
+      <VideoDemoSwitcher />
     </div>
   );
 }
