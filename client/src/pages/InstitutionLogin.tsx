@@ -28,11 +28,33 @@ export default function InstitutionLogin() {
 
   const loginMutation = trpc.auth.loginWithCredentials.useMutation({
     onSuccess: (data) => {
-      localStorage.setItem("studyloop_session_user", JSON.stringify(data.user));
-      toast.success(`Welcome back, ${data.user.name}!`, {
-        description: "Accessing Researcher Operations Portal.",
+      const uname = (data.user.username || "").toLowerCase();
+      const matchedPI =
+        PI_ACCOUNTS.find(
+          (p) =>
+            p.username.toLowerCase() === uname ||
+            p.id.toLowerCase() === uname
+        ) || PI_ACCOUNTS[0];
+
+      const piUser = {
+        id: matchedPI.id,
+        name: matchedPI.name,
+        title: matchedPI.title,
+        email: data.user.email || `${matchedPI.id}@studyloop.org`,
+        role: "researcher",
+        institution: matchedPI.institution,
+        assignedStudySlug: matchedPI.studySlug,
+        assignedStudyTitle: matchedPI.studyTitle,
+      };
+
+      localStorage.setItem("studyloop_session_user", JSON.stringify(piUser));
+      localStorage.setItem("studyloop_active_pi", JSON.stringify(matchedPI));
+      localStorage.setItem("studyloop_active_study_slug", matchedPI.studySlug);
+
+      toast.success(`Welcome back, ${matchedPI.name}!`, {
+        description: `Accessing Protocol Portal: ${matchedPI.studyTitle}`,
       });
-      setLocation("/researchers");
+      setLocation(`/researchers?studySlug=${encodeURIComponent(matchedPI.studySlug)}`);
     },
     onError: (err) => {
       toast.error(err.message || "Failed to sign in. Please verify your credentials.");
@@ -170,6 +192,26 @@ export default function InstitutionLogin() {
             <Badge variant="outline" className="text-[10px] border-slate-700 text-slate-300">
               IRB Security
             </Badge>
+          </div>
+
+          <div className="bg-slate-950/80 rounded-xl p-3 border border-slate-800 flex items-center justify-between gap-2">
+            <div className="text-xs">
+              <div className="font-bold text-slate-200">Precreated SSO PI Profile: Dr. H. Whitman, MD</div>
+              <div className="text-[11px] font-mono text-slate-400">pi_whitman / whitman123</div>
+            </div>
+            <Button
+              type="button"
+              size="sm"
+              variant="outline"
+              onClick={() => {
+                setUsername("pi_whitman");
+                setPassword("whitman123");
+                toast.info("SSO credentials loaded for Dr. Whitman");
+              }}
+              className="text-xs font-semibold border-slate-700 text-slate-300 hover:bg-slate-800 h-7"
+            >
+              Load SSO State
+            </Button>
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-4">

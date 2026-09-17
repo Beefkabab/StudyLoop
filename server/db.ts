@@ -131,13 +131,143 @@ export async function getUserByUsername(username: string) {
   return result.length > 0 ? result[0] : undefined;
 }
 
+export interface PrecreatedAccount {
+  id: number;
+  openId: string;
+  username: string;
+  passwordPlain: string;
+  name: string;
+  email: string;
+  role: "user" | "researcher";
+  institution?: string;
+  assignedStudySlug?: string;
+}
+
+export const PRECREATED_ACCOUNTS: PrecreatedAccount[] = [
+  // 1. Precreated User Profile (Volunteer / Participant)
+  {
+    id: 101,
+    openId: "cred_marcus_participant",
+    username: "marcus_volunteer",
+    passwordPlain: "volunteer123",
+    name: "Marcus Davis",
+    email: "marcus.davis92@example.com",
+    role: "user",
+  },
+  {
+    id: 102,
+    openId: "cred_user_profile",
+    username: "user_profile",
+    passwordPlain: "password123",
+    name: "Marcus Davis (Universal Volunteer)",
+    email: "volunteer@studyloop.health",
+    role: "user",
+  },
+  // 2. Precreated Institutional SSO PI Profile (Principal Investigator)
+  {
+    id: 201,
+    openId: "cred_pi_whitman",
+    username: "pi_whitman",
+    passwordPlain: "whitman123",
+    name: "Dr. H. Whitman, MD",
+    email: "whitman@triangleaging.org",
+    role: "researcher",
+    institution: "Triangle Center for Aging and Brain Sciences",
+    assignedStudySlug: "healthy-aging-sensory-resilience-study",
+  },
+  {
+    id: 202,
+    openId: "cred_sso_pi",
+    username: "sso_pi_profile",
+    passwordPlain: "sso2026",
+    name: "Dr. H. Whitman, MD (Institutional SSO)",
+    email: "whitman.sso@duke-health.org",
+    role: "researcher",
+    institution: "Triangle Center for Aging and Brain Sciences",
+    assignedStudySlug: "healthy-aging-sensory-resilience-study",
+  },
+  // Additional Personas
+  {
+    id: 103,
+    openId: "cred_chloe_student",
+    username: "chloe_student",
+    passwordPlain: "student123",
+    name: "Chloe Martinez",
+    email: "chloe.m.student@example.edu",
+    role: "user",
+  },
+  {
+    id: 104,
+    openId: "cred_robert_patient",
+    username: "robert_patient",
+    passwordPlain: "patient123",
+    name: "Robert Chen",
+    email: "robert.chen.t2d@example.org",
+    role: "user",
+  },
+  {
+    id: 203,
+    openId: "cred_coordinator_sarah",
+    username: "coordinator_sarah",
+    passwordPlain: "researcher123",
+    name: "Sarah Lindquist, CRC",
+    email: "sarah.lindquist@triangleresearch.org",
+    role: "researcher",
+    institution: "Triangle Clinical Trials Operations",
+    assignedStudySlug: "all",
+  },
+  {
+    id: 204,
+    openId: "cred_pi_vance",
+    username: "pi_vance",
+    passwordPlain: "vance123",
+    name: "Dr. Elena Vance, MD",
+    email: "elena.vance@apexpharma.com",
+    role: "researcher",
+    institution: "Apex Pharma Therapeutics",
+    assignedStudySlug: "novel-oral-glp1-glycemic-control-trial",
+  },
+];
+
 export async function authenticateLocalUser(username: string, passwordPlain: string) {
+  const cleanUser = username.trim().toLowerCase();
+  const cleanPass = passwordPlain.trim();
+
+  // 1. Check pre-created accounts first for reliable instant access
+  const precreated = PRECREATED_ACCOUNTS.find(
+    (acc) => acc.username.toLowerCase() === cleanUser && acc.passwordPlain === cleanPass
+  );
+
   const db = await getDb();
-  if (!db) return undefined;
-  const user = await getUserByUsername(username);
-  if (!user || !user.passwordHash) return undefined;
-  if (!verifyPassword(passwordPlain, user.passwordHash)) return undefined;
-  return user;
+  if (db) {
+    try {
+      const user = await getUserByUsername(cleanUser);
+      if (user && user.passwordHash && verifyPassword(passwordPlain, user.passwordHash)) {
+        return user;
+      }
+    } catch (e) {
+      console.warn("[Auth] DB lookup error, falling back to precreated:", e);
+    }
+  }
+
+  // 2. Return precreated account as User object if matched
+  if (precreated) {
+    return {
+      id: precreated.id,
+      openId: precreated.openId,
+      username: precreated.username,
+      passwordHash: "",
+      name: precreated.name,
+      email: precreated.email,
+      loginMethod: "credentials",
+      role: precreated.role,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+      lastSignedIn: new Date(),
+    };
+  }
+
+  return undefined;
 }
 
 export async function registerLocalUser(data: {

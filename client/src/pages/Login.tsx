@@ -1,20 +1,22 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { Link, useLocation } from "wouter";
 import { trpc } from "@/lib/trpc";
 import { 
   UserCircle2, 
   ArrowRight, 
   ShieldCheck, 
-  Sparkles,
   Building2,
   CheckCircle2,
   LockKeyhole,
-  Video,
-  Play,
   Stethoscope,
   Microscope,
-  Zap,
-  RotateCcw
+  Eye,
+  EyeOff,
+  Sparkles,
+  KeyRound,
+  Check,
+  ChevronDown,
+  ChevronUp
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -106,28 +108,93 @@ export const PI_ACCOUNTS: PIData[] = [
 
 export default function Login() {
   const [, setLocation] = useLocation();
-  const [activeTab, setActiveTab] = useState<"participants" | "investigators">("participants");
   const [mode, setMode] = useState<"login" | "register">("login");
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
-  const [isAutoTyping, setIsAutoTyping] = useState(false);
+  const [showMoreProfiles, setShowMoreProfiles] = useState(false);
+
+  // Identify active pre-created state based on current input
+  const activeDetectedState = useMemo(() => {
+    const cleanUser = username.trim().toLowerCase();
+    if (cleanUser === "marcus_volunteer" || cleanUser === "marcus" || cleanUser === "user_profile") {
+      return "user_profile";
+    }
+    if (cleanUser === "pi_whitman" || cleanUser === "whitman" || cleanUser === "sso_pi_profile") {
+      return "sso_pi_profile";
+    }
+    if (cleanUser === "chloe_student" || cleanUser === "chloe") {
+      return "chloe";
+    }
+    if (cleanUser === "robert_patient" || cleanUser === "robert") {
+      return "robert";
+    }
+    if (cleanUser === "pi_vance" || cleanUser === "vance") {
+      return "pi_vance";
+    }
+    if (cleanUser === "coordinator_sarah" || cleanUser === "sarah") {
+      return "coordinator_sarah";
+    }
+    return null;
+  }, [username]);
 
   const loginMutation = trpc.auth.loginWithCredentials.useMutation({
     onSuccess: (data) => {
-      localStorage.setItem("studyloop_session_user", JSON.stringify(data.user));
-      
-      if (data.user.username === "marcus_volunteer") {
-        localStorage.setItem("studyloop_profile_key", "demo_profile_rural_male");
-      } else if (data.user.username === "chloe_student") {
-        localStorage.setItem("studyloop_profile_key", "demo_profile_urban_student");
-      } else if (data.user.username === "robert_patient") {
-        localStorage.setItem("studyloop_profile_key", "demo_profile_chronic_patient");
+      const uname = (data.user.username || "").toLowerCase();
+      const isPI =
+        data.user.role === "researcher" ||
+        uname.startsWith("pi_") ||
+        uname === "coordinator_sarah" ||
+        uname === "sso_pi_profile";
+
+      if (isPI) {
+        // Find matching PI account
+        const matchedPI =
+          PI_ACCOUNTS.find(
+            (p) =>
+              p.username.toLowerCase() === uname ||
+              p.id.toLowerCase() === uname
+          ) || PI_ACCOUNTS[0];
+
+        const piUser = {
+          id: matchedPI.id,
+          name: matchedPI.name,
+          title: matchedPI.title,
+          email: data.user.email || `${matchedPI.id}@studyloop.org`,
+          role: "researcher",
+          institution: matchedPI.institution,
+          assignedStudySlug: matchedPI.studySlug,
+          assignedStudyTitle: matchedPI.studyTitle,
+        };
+
+        localStorage.setItem("studyloop_session_user", JSON.stringify(piUser));
+        localStorage.setItem("studyloop_active_pi", JSON.stringify(matchedPI));
+        localStorage.setItem("studyloop_active_study_slug", matchedPI.studySlug);
+
+        toast.success(`Authenticated via Institutional SSO`, {
+          description: `Welcome, ${matchedPI.name}! Loading ${matchedPI.studyTitle}.`,
+        });
+
+        setLocation(`/researchers?studySlug=${encodeURIComponent(matchedPI.studySlug)}`);
+        return;
       }
 
-      toast.success(`Welcome back, ${data.user.name}!`, {
-        description: "Accessing your volunteer participant dashboard.",
+      // Volunteer / Participant user
+      localStorage.removeItem("studyloop_active_pi");
+      localStorage.setItem("studyloop_session_user", JSON.stringify(data.user));
+
+      let profileKey = "demo_profile_rural_male";
+      if (uname.includes("chloe")) {
+        profileKey = "demo_profile_urban_student";
+      } else if (uname.includes("robert")) {
+        profileKey = "demo_profile_chronic_patient";
+      }
+      localStorage.setItem("studyloop_profile_key", profileKey);
+
+      toast.success(`Signed in as ${data.user.name}`, {
+        description: "Accessing your participant profile and matched clinical trials.",
       });
 
       setLocation("/dashboard");
@@ -164,88 +231,46 @@ export default function Login() {
     }
   };
 
-  // Instant 1-Click Consumer Persona Login
-  const handleConsumerPersonaLogin = (persona: "marcus" | "chloe" | "robert") => {
-    localStorage.removeItem("studyloop_active_pi");
-    if (persona === "marcus") {
-      localStorage.setItem("studyloop_profile_key", "demo_profile_rural_male");
-      const user = { id: 1, name: "Marcus Davis", email: "marcus.davis92@example.com", role: "user" };
-      localStorage.setItem("studyloop_session_user", JSON.stringify(user));
-      toast.success("Signed in as Marcus Davis (Rural Male Volunteer)", {
-        description: "Navigating to Participant Dashboard with $650 matched study.",
-      });
-    } else if (persona === "chloe") {
-      localStorage.setItem("studyloop_profile_key", "demo_profile_urban_student");
-      const user = { id: 2, name: "Chloe Martinez", email: "chloe.m.student@example.edu", role: "user" };
-      localStorage.setItem("studyloop_session_user", JSON.stringify(user));
-      toast.success("Signed in as Chloe Martinez (Urban Student)", {
-        description: "Navigating to Healthy Control Dashboard.",
-      });
-    } else {
-      localStorage.setItem("studyloop_profile_key", "demo_profile_chronic_patient");
-      const user = { id: 3, name: "Robert Chen", email: "robert.chen.t2d@example.org", role: "user" };
-      localStorage.setItem("studyloop_session_user", JSON.stringify(user));
-      toast.success("Signed in as Robert Chen (T2D Patient)", {
-        description: "Navigating to Metabolic Trial Dashboard.",
-      });
-    }
-    setLocation("/dashboard");
-  };
-
-  // Instant 1-Click PI Persona Login
-  const handlePIPersonaLogin = (piId: string) => {
-    const pi = PI_ACCOUNTS.find((p) => p.id === piId);
-    if (!pi) return;
-
-    const user = {
-      id: pi.id,
-      name: pi.name,
-      title: pi.title,
-      email: `${pi.id}@studyloop.org`,
-      role: "researcher",
-      institution: pi.institution,
-      assignedStudySlug: pi.studySlug,
-      assignedStudyTitle: pi.studyTitle,
-    };
-
-    localStorage.setItem("studyloop_session_user", JSON.stringify(user));
-    localStorage.setItem("studyloop_active_pi", JSON.stringify(pi));
-    localStorage.setItem("studyloop_active_study_slug", pi.studySlug);
-
-    toast.success(`Authenticated as ${pi.name}`, {
-      description: `Entering protocol portal for "${pi.studyTitle}"`,
-    });
-
-    setLocation(`/researchers?studySlug=${encodeURIComponent(pi.studySlug)}`);
-  };
-
-  // Realistic live typewriter simulation for video screencasts
-  const simulateVideoTyping = async (
-    targetUser: string,
-    targetPass: string,
-    personaLabel: string,
-    onFinish: () => void
-  ) => {
-    if (isAutoTyping) return;
-    setIsAutoTyping(true);
+  // Precreated Login State Selectors (Sets form state so user can login themselves)
+  const applyPrecreatedState = (type: "user_profile" | "sso_pi_profile" | "chloe" | "robert" | "pi_vance" | "coordinator_sarah") => {
     setMode("login");
-    setUsername("");
-    setPassword("");
-
-    toast.info(`🎥 Video Simulation: Auto-typing credentials for ${personaLabel}...`);
-
-    for (let i = 1; i <= targetUser.length; i++) {
-      setUsername(targetUser.slice(0, i));
-      await new Promise((r) => setTimeout(r, 35));
+    if (type === "user_profile") {
+      setUsername("marcus_volunteer");
+      setPassword("volunteer123");
+      toast.info("Loaded State: Precreated User Profile", {
+        description: "Credentials filled for Marcus Davis (Rural Male Volunteer). Click Sign In below.",
+      });
+    } else if (type === "sso_pi_profile") {
+      setUsername("pi_whitman");
+      setPassword("whitman123");
+      toast.info("Loaded State: Precreated SSO PI Profile", {
+        description: "Credentials filled for Dr. H. Whitman, MD (Institutional SSO). Click Sign In below.",
+      });
+    } else if (type === "chloe") {
+      setUsername("chloe_student");
+      setPassword("student123");
+      toast.info("Loaded State: Chloe Martinez (Healthy Control)", {
+        description: "Click Sign In below.",
+      });
+    } else if (type === "robert") {
+      setUsername("robert_patient");
+      setPassword("patient123");
+      toast.info("Loaded State: Robert Chen (Type 2 Diabetes Patient)", {
+        description: "Click Sign In below.",
+      });
+    } else if (type === "pi_vance") {
+      setUsername("pi_vance");
+      setPassword("vance123");
+      toast.info("Loaded State: Dr. Elena Vance (Endocrinology PI)", {
+        description: "Click Sign In below.",
+      });
+    } else if (type === "coordinator_sarah") {
+      setUsername("coordinator_sarah");
+      setPassword("researcher123");
+      toast.info("Loaded State: Sarah Lindquist (Lead Coordinator)", {
+        description: "Click Sign In below.",
+      });
     }
-    await new Promise((r) => setTimeout(r, 120));
-    for (let i = 1; i <= targetPass.length; i++) {
-      setPassword(targetPass.slice(0, i));
-      await new Promise((r) => setTimeout(r, 35));
-    }
-    await new Promise((r) => setTimeout(r, 200));
-    setIsAutoTyping(false);
-    onFinish();
   };
 
   return (
@@ -258,381 +283,199 @@ export default function Login() {
           </div>
           <div className="flex items-center justify-center gap-2">
             <Badge variant="outline" className="bg-sky-50 text-sky-700 border-sky-200 text-xs font-semibold py-0.5 px-2.5">
-              Two-Sided Healthcare Marketplace
+              StudyLoop Sign In
             </Badge>
-            <Badge className="bg-red-500 hover:bg-red-600 text-white text-xs font-bold py-0.5 px-2.5 flex items-center gap-1 shadow-xs">
-              <Video className="h-3 w-3" />
-              MVP Video Demo Suite
+            <Badge className="bg-slate-900 text-white text-xs font-semibold py-0.5 px-2.5">
+              Precreated Profiles Ready
             </Badge>
           </div>
           <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight">
-            StudyLoop Authentication Simulation
+            Sign In to StudyLoop
           </h1>
           <p className="text-xs sm:text-sm text-slate-600 max-w-lg mx-auto leading-relaxed">
-            Select a verified persona below for seamless, 1-click video recordings, or use the interactive typewriter feature to demonstrate live credential sign-in on camera.
+            Log in yourself using either the precreated <strong>User Profile</strong> (Participant) or the precreated <strong>Institutional SSO PI Profile</strong> (Principal Investigator).
           </p>
         </div>
 
-        {/* Persona Selector Tabs */}
-        <div className="bg-white p-2 rounded-2xl border border-slate-200 shadow-xs flex items-center justify-center gap-2">
-          <button
-            type="button"
-            onClick={() => setActiveTab("participants")}
-            className={`flex-1 py-2.5 px-4 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-2 cursor-pointer ${
-              activeTab === "participants"
-                ? "bg-sky-600 text-white shadow-sm"
-                : "text-slate-600 hover:bg-slate-100"
+        {/* The Two Primary Pre-created Login States */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+          {/* State Card 1: Precreated User Profile */}
+          <div 
+            className={`p-4 rounded-2xl border transition-all flex flex-col justify-between space-y-3 cursor-pointer ${
+              activeDetectedState === "user_profile"
+                ? "bg-sky-50/80 border-sky-500 shadow-md ring-2 ring-sky-400/20"
+                : "bg-white border-slate-200 hover:border-sky-300 hover:bg-sky-50/20 shadow-xs"
             }`}
+            onClick={() => applyPrecreatedState("user_profile")}
           >
-            <UserCircle2 className="h-4 w-4" />
-            Volunteer Participants (Consumer Side)
-          </button>
-          <button
-            type="button"
-            onClick={() => setActiveTab("investigators")}
-            className={`flex-1 py-2.5 px-4 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-2 cursor-pointer ${
-              activeTab === "investigators"
-                ? "bg-slate-900 text-white shadow-sm"
-                : "text-slate-600 hover:bg-slate-100"
+            <div className="space-y-2">
+              <div className="flex items-center justify-between">
+                <Badge variant="outline" className="bg-sky-100/70 text-sky-700 border-sky-300 text-[10px] font-bold py-0.5 px-2 flex items-center gap-1">
+                  <UserCircle2 className="h-3 w-3" />
+                  PRECREATED USER PROFILE
+                </Badge>
+                {activeDetectedState === "user_profile" && (
+                  <span className="flex items-center gap-1 text-[11px] font-bold text-sky-600">
+                    <Check className="h-3.5 w-3.5" /> State Loaded
+                  </span>
+                )}
+              </div>
+
+              <div>
+                <div className="text-sm font-bold text-slate-900">Marcus Davis</div>
+                <div className="text-xs text-slate-500">Rural Male Volunteer (Age 34)</div>
+                <div className="text-[11px] text-emerald-600 font-medium mt-0.5">
+                  Matched: Neural Resilience Study ($650)
+                </div>
+              </div>
+
+              {/* Exact Credentials Box */}
+              <div className="bg-slate-100/90 rounded-lg p-2 font-mono text-[11px] text-slate-700 space-y-0.5 border border-slate-200/80">
+                <div><span className="text-slate-400">Username:</span> <strong>marcus_volunteer</strong></div>
+                <div><span className="text-slate-400">Password:</span> <strong>volunteer123</strong></div>
+              </div>
+            </div>
+
+            <Button
+              type="button"
+              size="sm"
+              onClick={(e) => {
+                e.stopPropagation();
+                applyPrecreatedState("user_profile");
+              }}
+              className="w-full bg-sky-600 hover:bg-sky-700 text-white text-xs font-bold h-8 cursor-pointer shadow-xs"
+            >
+              {activeDetectedState === "user_profile" ? "✓ Credentials Loaded in Form" : "Load User Profile State"}
+            </Button>
+          </div>
+
+          {/* State Card 2: Precreated Institutional SSO PI Profile */}
+          <div 
+            className={`p-4 rounded-2xl border transition-all flex flex-col justify-between space-y-3 cursor-pointer ${
+              activeDetectedState === "sso_pi_profile"
+                ? "bg-slate-900 text-white border-slate-700 shadow-md ring-2 ring-slate-700/30"
+                : "bg-slate-950 text-white border-slate-800 hover:border-slate-700 shadow-xs"
             }`}
+            onClick={() => applyPrecreatedState("sso_pi_profile")}
           >
-            <Stethoscope className="h-4 w-4" />
-            Investigators & Staff (Institutional Side)
-          </button>
+            <div className="space-y-2">
+              <div className="flex items-center justify-between">
+                <Badge variant="outline" className="bg-emerald-500/10 text-emerald-400 border-emerald-500/30 text-[10px] font-bold py-0.5 px-2 flex items-center gap-1">
+                  <Stethoscope className="h-3 w-3" />
+                  PRECREATED SSO PI PROFILE
+                </Badge>
+                {activeDetectedState === "sso_pi_profile" && (
+                  <span className="flex items-center gap-1 text-[11px] font-bold text-emerald-400">
+                    <Check className="h-3.5 w-3.5" /> State Loaded
+                  </span>
+                )}
+              </div>
+
+              <div>
+                <div className="text-sm font-bold text-white">Dr. H. Whitman, MD</div>
+                <div className="text-xs text-slate-400">Director, Triangle Center for Aging & Brain Sciences</div>
+                <div className="text-[11px] text-sky-400 font-medium mt-0.5">
+                  Protocol IRB: Pro00109482 (12 Applicants)
+                </div>
+              </div>
+
+              {/* Exact Credentials Box */}
+              <div className="bg-slate-900 rounded-lg p-2 font-mono text-[11px] text-slate-300 space-y-0.5 border border-slate-800">
+                <div><span className="text-slate-500">Staff ID / SSO:</span> <strong>pi_whitman</strong></div>
+                <div><span className="text-slate-500">SSO Password:</span> <strong>whitman123</strong></div>
+              </div>
+            </div>
+
+            <Button
+              type="button"
+              size="sm"
+              onClick={(e) => {
+                e.stopPropagation();
+                applyPrecreatedState("sso_pi_profile");
+              }}
+              className="w-full bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold h-8 cursor-pointer shadow-xs"
+            >
+              {activeDetectedState === "sso_pi_profile" ? "✓ Credentials Loaded in Form" : "Load SSO PI Profile State"}
+            </Button>
+          </div>
         </div>
 
-        {/* Tab Content: Volunteer Participants */}
-        {activeTab === "participants" && (
-          <div className="bg-white p-5 rounded-2xl border border-sky-100 shadow-xs space-y-3.5">
-            <div className="flex items-center justify-between">
-              <span className="text-xs font-extrabold text-slate-900 flex items-center gap-1.5">
-                <Sparkles className="h-4 w-4 text-amber-500" />
-                Participant Personas for Video Walkthrough:
-              </span>
-              <span className="text-[10px] text-slate-400 font-medium">1-Click or Auto-Type</span>
+        {/* Expandable: More Precreated Profiles */}
+        <div className="text-center">
+          <button
+            type="button"
+            onClick={() => setShowMoreProfiles(!showMoreProfiles)}
+            className="inline-flex items-center gap-1 text-xs font-semibold text-slate-500 hover:text-slate-800 cursor-pointer"
+          >
+            {showMoreProfiles ? "Hide additional precreated profiles" : "View additional precreated profiles (Chloe, Robert, Dr. Vance, Coordinator Sarah)"}
+            {showMoreProfiles ? <ChevronUp className="h-3.5 w-3.5" /> : <ChevronDown className="h-3.5 w-3.5" />}
+          </button>
+
+          {showMoreProfiles && (
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 pt-3 animate-in fade-in duration-150">
+              <button
+                type="button"
+                onClick={() => applyPrecreatedState("chloe")}
+                className="p-2.5 rounded-xl border border-slate-200 bg-white hover:border-teal-500 text-left cursor-pointer"
+              >
+                <div className="text-xs font-bold text-slate-900">Chloe Martinez</div>
+                <div className="text-[10px] text-slate-500">Healthy Control Student</div>
+                <div className="text-[9px] font-mono text-slate-400 mt-1">chloe_student / student123</div>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => applyPrecreatedState("robert")}
+                className="p-2.5 rounded-xl border border-slate-200 bg-white hover:border-purple-500 text-left cursor-pointer"
+              >
+                <div className="text-xs font-bold text-slate-900">Robert Chen</div>
+                <div className="text-[10px] text-slate-500">T2D Metabolic Patient</div>
+                <div className="text-[9px] font-mono text-slate-400 mt-1">robert_patient / patient123</div>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => applyPrecreatedState("pi_vance")}
+                className="p-2.5 rounded-xl border border-slate-200 bg-white hover:border-sky-500 text-left cursor-pointer"
+              >
+                <div className="text-xs font-bold text-slate-900">Dr. Elena Vance</div>
+                <div className="text-[10px] text-slate-500">Endocrinology PI</div>
+                <div className="text-[9px] font-mono text-slate-400 mt-1">pi_vance / vance123</div>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => applyPrecreatedState("coordinator_sarah")}
+                className="p-2.5 rounded-xl border border-slate-200 bg-white hover:border-purple-500 text-left cursor-pointer"
+              >
+                <div className="text-xs font-bold text-slate-900">Sarah Lindquist</div>
+                <div className="text-[10px] text-slate-500">Lead Coordinator</div>
+                <div className="text-[9px] font-mono text-slate-400 mt-1">coordinator_sarah / researcher123</div>
+              </button>
             </div>
+          )}
+        </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-              {/* Persona 1: Marcus */}
-              <div className="p-3.5 rounded-xl border border-slate-200 hover:border-sky-400 bg-slate-50/50 hover:bg-sky-50/30 transition-all flex flex-col justify-between space-y-3">
-                <div className="space-y-1.5">
-                  <div className="flex items-center justify-between">
-                    <div className="h-8 w-8 rounded-full bg-sky-100 text-sky-700 flex items-center justify-center font-bold text-xs">
-                      MD
-                    </div>
-                    <Badge variant="outline" className="text-[9px] bg-emerald-50 text-emerald-700 border-emerald-200">
-                      Diversity Target
-                    </Badge>
-                  </div>
-                  <div>
-                    <div className="text-xs font-bold text-slate-900">Marcus Davis</div>
-                    <div className="text-[11px] text-slate-500">Rural Male Volunteer (34)</div>
-                    <div className="text-[10px] text-emerald-600 font-medium mt-1">
-                      Matched: Neural Resilience ($650)
-                    </div>
-                  </div>
-                </div>
-
-                <div className="space-y-1.5 pt-1">
-                  <Button
-                    size="sm"
-                    onClick={() => handleConsumerPersonaLogin("marcus")}
-                    className="w-full bg-sky-600 hover:bg-sky-700 text-white text-xs font-bold h-8 cursor-pointer"
-                  >
-                    <Zap className="h-3 w-3 mr-1 text-amber-300" />
-                    1-Click Entry
-                  </Button>
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    disabled={isAutoTyping}
-                    onClick={() =>
-                      simulateVideoTyping(
-                        "marcus_volunteer",
-                        "password123",
-                        "Marcus Davis",
-                        () => handleConsumerPersonaLogin("marcus")
-                      )
-                    }
-                    className="w-full text-[11px] text-slate-600 hover:text-slate-900 border-slate-200 h-7 cursor-pointer"
-                  >
-                    <Play className="h-2.5 w-2.5 mr-1 text-red-500" />
-                    🎥 Auto-Type on Video
-                  </Button>
-                </div>
-              </div>
-
-              {/* Persona 2: Chloe */}
-              <div className="p-3.5 rounded-xl border border-slate-200 hover:border-teal-400 bg-slate-50/50 hover:bg-teal-50/30 transition-all flex flex-col justify-between space-y-3">
-                <div className="space-y-1.5">
-                  <div className="flex items-center justify-between">
-                    <div className="h-8 w-8 rounded-full bg-teal-100 text-teal-700 flex items-center justify-center font-bold text-xs">
-                      CM
-                    </div>
-                    <Badge variant="outline" className="text-[9px] bg-teal-50 text-teal-700 border-teal-200">
-                      Healthy Control
-                    </Badge>
-                  </div>
-                  <div>
-                    <div className="text-xs font-bold text-slate-900">Chloe Martinez</div>
-                    <div className="text-[11px] text-slate-500">Urban Student (22)</div>
-                    <div className="text-[10px] text-teal-600 font-medium mt-1">
-                      Matched: Immunology ($250)
-                    </div>
-                  </div>
-                </div>
-
-                <div className="space-y-1.5 pt-1">
-                  <Button
-                    size="sm"
-                    onClick={() => handleConsumerPersonaLogin("chloe")}
-                    className="w-full bg-teal-600 hover:bg-teal-700 text-white text-xs font-bold h-8 cursor-pointer"
-                  >
-                    <Zap className="h-3 w-3 mr-1 text-amber-300" />
-                    1-Click Entry
-                  </Button>
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    disabled={isAutoTyping}
-                    onClick={() =>
-                      simulateVideoTyping(
-                        "chloe_student",
-                        "password123",
-                        "Chloe Martinez",
-                        () => handleConsumerPersonaLogin("chloe")
-                      )
-                    }
-                    className="w-full text-[11px] text-slate-600 hover:text-slate-900 border-slate-200 h-7 cursor-pointer"
-                  >
-                    <Play className="h-2.5 w-2.5 mr-1 text-red-500" />
-                    🎥 Auto-Type on Video
-                  </Button>
-                </div>
-              </div>
-
-              {/* Persona 3: Robert */}
-              <div className="p-3.5 rounded-xl border border-slate-200 hover:border-purple-400 bg-slate-50/50 hover:bg-purple-50/30 transition-all flex flex-col justify-between space-y-3">
-                <div className="space-y-1.5">
-                  <div className="flex items-center justify-between">
-                    <div className="h-8 w-8 rounded-full bg-purple-100 text-purple-700 flex items-center justify-center font-bold text-xs">
-                      RC
-                    </div>
-                    <Badge variant="outline" className="text-[9px] bg-purple-50 text-purple-700 border-purple-200">
-                      Metabolic Trial
-                    </Badge>
-                  </div>
-                  <div>
-                    <div className="text-xs font-bold text-slate-900">Robert Chen</div>
-                    <div className="text-[11px] text-slate-500">T2D Patient (58)</div>
-                    <div className="text-[10px] text-purple-600 font-medium mt-1">
-                      Matched: Oral GLP-1 ($1,850)
-                    </div>
-                  </div>
-                </div>
-
-                <div className="space-y-1.5 pt-1">
-                  <Button
-                    size="sm"
-                    onClick={() => handleConsumerPersonaLogin("robert")}
-                    className="w-full bg-purple-600 hover:bg-purple-700 text-white text-xs font-bold h-8 cursor-pointer"
-                  >
-                    <Zap className="h-3 w-3 mr-1 text-amber-300" />
-                    1-Click Entry
-                  </Button>
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    disabled={isAutoTyping}
-                    onClick={() =>
-                      simulateVideoTyping(
-                        "robert_patient",
-                        "password123",
-                        "Robert Chen",
-                        () => handleConsumerPersonaLogin("robert")
-                      )
-                    }
-                    className="w-full text-[11px] text-slate-600 hover:text-slate-900 border-slate-200 h-7 cursor-pointer"
-                  >
-                    <Play className="h-2.5 w-2.5 mr-1 text-red-500" />
-                    🎥 Auto-Type on Video
-                  </Button>
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* Tab Content: Investigators & Staff */}
-        {activeTab === "investigators" && (
-          <div className="bg-slate-900 text-white p-5 rounded-2xl border border-slate-800 shadow-xl space-y-3.5">
-            <div className="flex items-center justify-between border-b border-slate-800 pb-2.5">
-              <span className="text-xs font-extrabold text-white flex items-center gap-1.5">
-                <Stethoscope className="h-4 w-4 text-sky-400" />
-                Investigator Personas for Video Walkthrough:
-              </span>
-              <span className="text-[10px] text-slate-400 font-medium">Protocol & IRB Portal</span>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-              {/* PI 1: Dr. Whitman */}
-              <div className="p-3.5 rounded-xl border border-slate-800 hover:border-sky-500/60 bg-slate-950/60 transition-all flex flex-col justify-between space-y-3">
-                <div className="space-y-1.5">
-                  <div className="flex items-center justify-between">
-                    <Badge variant="outline" className="text-[9px] bg-sky-500/10 text-sky-400 border-sky-500/30">
-                      PI • Aging Core
-                    </Badge>
-                    <span className="text-[10px] text-slate-400 font-mono">Pro00109482</span>
-                  </div>
-                  <div>
-                    <div className="text-xs font-bold text-white">Dr. H. Whitman, MD</div>
-                    <div className="text-[11px] text-slate-400">Triangle Aging & Brain Sciences</div>
-                    <div className="text-[10px] text-sky-400 font-medium mt-1">
-                      Neural Resilience Study ($650)
-                    </div>
-                  </div>
-                </div>
-
-                <div className="space-y-1.5 pt-1">
-                  <Button
-                    size="sm"
-                    onClick={() => handlePIPersonaLogin("pi_whitman")}
-                    className="w-full bg-sky-600 hover:bg-sky-500 text-white text-xs font-bold h-8 cursor-pointer"
-                  >
-                    <Zap className="h-3 w-3 mr-1 text-amber-300" />
-                    Enter Protocol
-                  </Button>
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    disabled={isAutoTyping}
-                    onClick={() =>
-                      simulateVideoTyping(
-                        "pi_whitman",
-                        "irb_whitman_2026",
-                        "Dr. H. Whitman",
-                        () => handlePIPersonaLogin("pi_whitman")
-                      )
-                    }
-                    className="w-full text-[11px] text-slate-300 hover:text-white border-slate-700 hover:bg-slate-800 h-7 cursor-pointer"
-                  >
-                    <Play className="h-2.5 w-2.5 mr-1 text-red-400" />
-                    🎥 Auto-Type on Video
-                  </Button>
-                </div>
-              </div>
-
-              {/* PI 2: Dr. Vance */}
-              <div className="p-3.5 rounded-xl border border-slate-800 hover:border-teal-500/60 bg-slate-950/60 transition-all flex flex-col justify-between space-y-3">
-                <div className="space-y-1.5">
-                  <div className="flex items-center justify-between">
-                    <Badge variant="outline" className="text-[9px] bg-teal-500/10 text-teal-400 border-teal-500/30">
-                      PI • Endocrinology
-                    </Badge>
-                    <span className="text-[10px] text-slate-400 font-mono">IND-189302</span>
-                  </div>
-                  <div>
-                    <div className="text-xs font-bold text-white">Dr. Elena Vance, MD</div>
-                    <div className="text-[11px] text-slate-400">Apex Pharma Therapeutics</div>
-                    <div className="text-[10px] text-teal-400 font-medium mt-1">
-                      Phase II Oral GLP-1 ($1,850)
-                    </div>
-                  </div>
-                </div>
-
-                <div className="space-y-1.5 pt-1">
-                  <Button
-                    size="sm"
-                    onClick={() => handlePIPersonaLogin("pi_vance")}
-                    className="w-full bg-teal-600 hover:bg-teal-500 text-white text-xs font-bold h-8 cursor-pointer"
-                  >
-                    <Zap className="h-3 w-3 mr-1 text-amber-300" />
-                    Enter Protocol
-                  </Button>
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    disabled={isAutoTyping}
-                    onClick={() =>
-                      simulateVideoTyping(
-                        "pi_vance",
-                        "irb_vance_2026",
-                        "Dr. Elena Vance",
-                        () => handlePIPersonaLogin("pi_vance")
-                      )
-                    }
-                    className="w-full text-[11px] text-slate-300 hover:text-white border-slate-700 hover:bg-slate-800 h-7 cursor-pointer"
-                  >
-                    <Play className="h-2.5 w-2.5 mr-1 text-red-400" />
-                    🎥 Auto-Type on Video
-                  </Button>
-                </div>
-              </div>
-
-              {/* PI 3: Sarah Coordinator */}
-              <div className="p-3.5 rounded-xl border border-slate-800 hover:border-purple-500/60 bg-slate-950/60 transition-all flex flex-col justify-between space-y-3">
-                <div className="space-y-1.5">
-                  <div className="flex items-center justify-between">
-                    <Badge variant="outline" className="text-[9px] bg-purple-500/10 text-purple-400 border-purple-500/30">
-                      Lead Coordinator
-                    </Badge>
-                    <span className="text-[10px] text-slate-400 font-mono">Multi-Site</span>
-                  </div>
-                  <div>
-                    <div className="text-xs font-bold text-white">Sarah Lindquist, CRC</div>
-                    <div className="text-[11px] text-slate-400">Triangle Trials Operations</div>
-                    <div className="text-[10px] text-purple-400 font-medium mt-1">
-                      All Active Study Protocols
-                    </div>
-                  </div>
-                </div>
-
-                <div className="space-y-1.5 pt-1">
-                  <Button
-                    size="sm"
-                    onClick={() => handlePIPersonaLogin("coordinator_sarah")}
-                    className="w-full bg-purple-600 hover:bg-purple-500 text-white text-xs font-bold h-8 cursor-pointer"
-                  >
-                    <Zap className="h-3 w-3 mr-1 text-amber-300" />
-                    Coordinator Ops
-                  </Button>
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    disabled={isAutoTyping}
-                    onClick={() =>
-                      simulateVideoTyping(
-                        "coordinator_sarah",
-                        "crc_operations_2026",
-                        "Sarah Lindquist",
-                        () => handlePIPersonaLogin("coordinator_sarah")
-                      )
-                    }
-                    className="w-full text-[11px] text-slate-300 hover:text-white border-slate-700 hover:bg-slate-800 h-7 cursor-pointer"
-                  >
-                    <Play className="h-2.5 w-2.5 mr-1 text-red-400" />
-                    🎥 Auto-Type on Video
-                  </Button>
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* Standard Credentials Form */}
-        <div className="bg-white rounded-2xl border border-slate-200 shadow-xs p-6 sm:p-7 space-y-5">
+        {/* The Sign In Form: Allows logging in yourself */}
+        <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-6 sm:p-7 space-y-5">
           <div className="border-b border-slate-100 pb-3 flex items-center justify-between">
             <div>
               <h2 className="text-sm font-bold text-slate-900">
-                {mode === "login" ? "Standard Credentials Sign In" : "Register Universal Volunteer Profile"}
+                {mode === "login" ? "Enter Credentials to Sign In" : "Register Universal Volunteer Profile"}
               </h2>
               <p className="text-xs text-slate-500">
-                {isAutoTyping ? "Typing simulation in progress..." : "Sign in with your email or staff username"}
+                Type in your username and password, or click one of the precreated states above.
               </p>
             </div>
-            <Badge variant="secondary" className="text-[10px] bg-slate-100">
-              Interactive Form
-            </Badge>
+            {activeDetectedState ? (
+              <Badge className={activeDetectedState === "sso_pi_profile" ? "bg-emerald-600 text-white text-[10px]" : "bg-sky-600 text-white text-[10px]"}>
+                {activeDetectedState === "sso_pi_profile" ? "SSO PI State" : "User Profile State"}
+              </Badge>
+            ) : (
+              <Badge variant="outline" className="text-[10px] text-slate-500">
+                Standard Auth
+              </Badge>
+            )}
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-4">
@@ -661,32 +504,88 @@ export default function Login() {
             )}
 
             <div className="space-y-1">
-              <Label className="text-xs text-slate-700 font-semibold">Username / Staff ID</Label>
+              <div className="flex items-center justify-between">
+                <Label className="text-xs text-slate-700 font-semibold">
+                  Username or Staff ID / SSO
+                </Label>
+                <span className="text-[10px] text-slate-400 font-mono">
+                  {username ? username : "Type or load state above"}
+                </span>
+              </div>
               <Input
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
                 placeholder="e.g. marcus_volunteer or pi_whitman"
                 required
+                className="font-mono text-xs sm:text-sm"
               />
             </div>
 
             <div className="space-y-1">
-              <Label className="text-xs text-slate-700 font-semibold">Password</Label>
-              <Input
-                type="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                placeholder="••••••••"
-                required
-              />
+              <div className="flex items-center justify-between">
+                <Label className="text-xs text-slate-700 font-semibold">Password</Label>
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="text-[11px] text-slate-500 hover:text-slate-800 flex items-center gap-1 cursor-pointer"
+                >
+                  {showPassword ? <EyeOff className="h-3 w-3" /> : <Eye className="h-3 w-3" />}
+                  {showPassword ? "Hide password" : "Show password"}
+                </button>
+              </div>
+              <div className="relative">
+                <Input
+                  type={showPassword ? "text" : "password"}
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  placeholder="••••••••"
+                  required
+                  className="font-mono text-xs sm:text-sm pr-10"
+                />
+              </div>
             </div>
+
+            {/* Dynamic Active State Indicator */}
+            {activeDetectedState === "user_profile" && (
+              <div className="rounded-xl bg-sky-50 border border-sky-200 p-3 text-xs text-sky-800 flex items-center gap-2">
+                <UserCircle2 className="h-4 w-4 text-sky-600 shrink-0" />
+                <span>
+                  <strong>Active State:</strong> Logging in as <strong>Marcus Davis</strong> will open the <strong>Volunteer Participant Dashboard</strong> with his $650 matched study.
+                </span>
+              </div>
+            )}
+
+            {activeDetectedState === "sso_pi_profile" && (
+              <div className="rounded-xl bg-emerald-50 border border-emerald-200 p-3 text-xs text-emerald-800 flex items-center gap-2">
+                <Stethoscope className="h-4 w-4 text-emerald-600 shrink-0" />
+                <span>
+                  <strong>Active State:</strong> Logging in as <strong>Dr. H. Whitman, MD</strong> will authenticate via <strong>Institutional SSO</strong> and open the <strong>PI Protocol Workspace</strong>.
+                </span>
+              </div>
+            )}
 
             <Button
               type="submit"
-              disabled={loginMutation.isPending || registerMutation.isPending || isAutoTyping}
-              className="w-full bg-sky-600 hover:bg-sky-700 text-white font-bold h-10 cursor-pointer"
+              disabled={loginMutation.isPending || registerMutation.isPending}
+              className={`w-full font-bold h-10 cursor-pointer text-xs sm:text-sm transition-all ${
+                activeDetectedState === "sso_pi_profile"
+                  ? "bg-slate-900 hover:bg-slate-800 text-white"
+                  : "bg-sky-600 hover:bg-sky-700 text-white"
+              }`}
             >
-              {loginMutation.isPending ? "Authenticating..." : mode === "login" ? "Sign In" : "Create Profile Account"}
+              {loginMutation.isPending ? (
+                "Authenticating with server..."
+              ) : mode === "login" ? (
+                activeDetectedState === "user_profile" ? (
+                  "Sign In as Marcus Davis (User Profile) →"
+                ) : activeDetectedState === "sso_pi_profile" ? (
+                  "Sign In via Institutional SSO (Dr. Whitman) →"
+                ) : (
+                  "Sign In to Account →"
+                )
+              ) : (
+                "Create Profile Account"
+              )}
             </Button>
           </form>
 
@@ -706,7 +605,7 @@ export default function Login() {
           <div className="space-y-0.5">
             <div className="text-xs font-bold text-slate-900 flex items-center gap-1.5">
               <Building2 className="h-4 w-4 text-slate-700" />
-              Dedicated Research Institutional SSO Portal
+              Dedicated Institutional SSO Gateway
             </div>
             <p className="text-[11px] text-slate-500">
               Access the high-security Institutional Portal for IRB compliance officers and site directors.
