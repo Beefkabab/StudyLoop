@@ -99,23 +99,23 @@ const plans: PlanDefinition[] = [
   },
   {
     id: "enterprise_pharma",
-    badge: "BIOPHARMA SPONSORS & CROS",
-    name: "Commercial Trial Performance",
-    targetAudience: "Biopharma sponsors (Phase I–IV), global CROs, and multi-site trials",
-    price: "Performance CPQR",
-    cadence: "hybrid milestone model",
-    billingNote: "$4,500 base protocol activation + $185–$340 per Qualified Pre-Screened Referral (CPQR)",
-    description: "Outcome-aligned recruitment for commercial sponsors who need guaranteed pre-screened pipeline velocity instead of passive listings.",
+    badge: "MAJOR STUDIES & BIOPHARMA",
+    name: "Major Studies Enterprise",
+    targetAudience: "Major multi-site clinical trials, biopharma sponsors (Phase I–IV), and CROs",
+    price: "$12,000",
+    cadence: "/ month",
+    billingNote: "Billed monthly ($12k/mo) or annually ($144,000/yr) • Full multi-site protocol activation",
+    description: "High-velocity recruitment and pipeline management for major clinical studies requiring guaranteed screening velocity and multi-site coordination.",
     accent: "emerald",
     features: [
-      "Multi-site protocol deployment & geographic candidate routing",
+      "Full multi-site protocol deployment & geographic candidate routing",
       "Dedicated recruitment cohort targeting (FDA Diversity Action Plans)",
-      "Success-based pricing: Pay only for verified protocol-screened referrals",
-      "Custom CRO / EDC pipeline integrations & coordinator handoffs",
-      "Dropout-prevention reminders & participant travel stipend workflow",
-      "Dedicated Clinical Recruitment Manager & custom BAA / SLA",
+      "High-velocity pre-screened pipeline with verified coordinator handoffs",
+      "Custom CRO, CTMS & EDC pipeline integrations (OnCore, Epic, REDCap)",
+      "Automated participant visit reminders & travel stipend workflow",
+      "Dedicated Clinical Recruitment Manager & custom BAA / Enterprise SLA",
     ],
-    ctaText: "Request Trial Proposal",
+    ctaText: "Enroll Major Study ($12k/mo)",
   },
 ];
 
@@ -184,10 +184,10 @@ export default function ForInstitutions() {
             </p>
             <div className="flex flex-col sm:flex-row gap-3 mt-8">
               <Button 
-                onClick={() => openInquiry("enterprise_pharma", "University Campus Enterprise Agreement (1,000+ Protocols)", "1000")} 
-                className="bg-sky-600 hover:bg-sky-500 text-white font-bold text-xs h-11 px-6 rounded-xl shadow-lg shadow-sky-600/25"
+                onClick={() => openInquiry("enterprise_pharma", "Major Studies Enterprise Agreement ($12,000 / month)", "1000")} 
+                className="bg-sky-600 hover:bg-sky-500 text-white font-bold text-xs h-11 px-6 rounded-xl shadow-lg shadow-sky-600/25 cursor-pointer"
               >
-                Campus Enterprise License (1,000+ Studies) <ArrowRight className="h-4 w-4 ml-1.5" />
+                Major Studies Enterprise ($12k/mo) <ArrowRight className="h-4 w-4 ml-1.5" />
               </Button>
               <Link href="/researchers">
                 <Button variant="outline" className="bg-transparent border-white/20 hover:bg-white/10 hover:text-white text-white text-xs h-11 px-6 rounded-xl">
@@ -243,19 +243,19 @@ export default function ForInstitutions() {
                   </Badge>
                 </div>
                 <h2 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-white">
-                  Campus-Wide Enterprise Health System Agreement
+                  Major Studies & Campus Health System Agreement
                 </h2>
                 <p className="text-xs sm:text-sm text-slate-300 max-w-2xl leading-relaxed">
-                  Major research universities like <strong>Duke University (~1,800 active studies)</strong>, <strong>Johns Hopkins (~2,000 active studies)</strong>, and <strong>UNC Chapel Hill</strong> manage massive clinical trial volumes across dozens of medical departments. StudyLoop licenses the entire health system campus under a single institutional master agreement—costing less than <strong>$50 per study per year</strong>.
+                  Major research universities like <strong>Duke University (~1,800 active studies)</strong>, <strong>Johns Hopkins (~2,000 active studies)</strong>, and <strong>UNC Chapel Hill</strong> manage massive clinical trial volumes across dozens of medical departments. StudyLoop licenses major studies and campus-wide portfolios at a flat <strong>$12,000 / month</strong>—costing only <strong>~$12 per study per month</strong> when distributed across an institution's 1,000 active protocols.
                 </p>
               </div>
 
               <div className="bg-slate-950/80 border border-slate-800 rounded-2xl p-5 shrink-0 text-left lg:text-right min-w-[260px] space-y-1">
-                <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Campus Enterprise Annual License</div>
-                <div className="text-3xl sm:text-4xl font-extrabold text-white">$48,000 – $85,000</div>
-                <div className="text-xs text-emerald-400 font-semibold">/ year (Covers all 1,000+ active protocols)</div>
+                <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Major Studies Enterprise Tier</div>
+                <div className="text-3xl sm:text-4xl font-extrabold text-white">$12,000</div>
+                <div className="text-xs text-emerald-400 font-semibold">/ month ($144,000 / year)</div>
                 <p className="text-[10px] text-slate-400 pt-1">
-                  Amortizes to ~ $40 to $75 / study / year across the institution
+                  Amortizes to only ~ $12 / study / month across 1,000 protocols
                 </p>
               </div>
             </div>
@@ -299,10 +299,10 @@ export default function ForInstitutions() {
                 <span>Includes InCommon / Duo SSO, Net-60 institutional procurement, W-9 vendor onboarding, and custom university BAA.</span>
               </div>
               <Button
-                onClick={() => openInquiry("enterprise_pharma", "University Campus Enterprise Agreement (1,000+ Protocols)", "1000")}
+                onClick={() => openInquiry("enterprise_pharma", "Major Studies Enterprise Agreement ($12,000 / month)", "1000")}
                 className="bg-sky-500 hover:bg-sky-400 text-slate-950 font-extrabold text-xs h-10 px-6 rounded-xl shrink-0 cursor-pointer shadow-lg shadow-sky-500/20"
               >
-                Request Campus Enterprise Proposal (1,000+ Studies) <ArrowRight className="h-4 w-4 ml-1.5" />
+                Request Major Studies Agreement ($12k/mo) <ArrowRight className="h-4 w-4 ml-1.5" />
               </Button>
             </div>
           </div>
