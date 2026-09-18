@@ -26,7 +26,10 @@ import {
   FileText,
   DollarSign,
   Calculator,
-  HelpCircle
+  HelpCircle,
+  Landmark,
+  GraduationCap,
+  Network
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -54,33 +57,33 @@ export interface PlanDefinition {
 const plans: PlanDefinition[] = [
   {
     id: "starter_saas",
-    badge: "ACADEMIC & INVESTIGATOR GRANTS",
-    name: "Grant & Academic Protocol",
-    targetAudience: "University PIs, NIH R01 / K-Award Grantees, Academic Medical Centers",
+    badge: "INDIVIDUAL INVESTIGATOR GRANTS",
+    name: "Single Grant Protocol",
+    targetAudience: "Individual Academic PIs, NIH R01 / K-Award Grantees",
     price: "$1,850",
     cadence: "per 6-month protocol",
-    billingNote: "Or $290 / month • Invoiced for NIH modular grant line items (PO / Net-30)",
-    description: "Tailored for academic investigators who need grant-compatible invoicing without open-ended recurring credit card charges.",
+    billingNote: "One-time grant invoice (fits NIH modular budget line items; PO / Net-30 support)",
+    description: "For single academic lab investigators who need grant-compatible invoicing without open-ended recurring credit card charges.",
     accent: "slate",
     features: [
       "1 active protocol recruitment listing (6-month cycle)",
-      "Custom 5–10 question dynamic pre-screener",
+      "Custom 5–10 question dynamic eligibility screener",
       "De-identified qualified applicant handoff to coordinator",
       "Demographic & rural geographic diversity tracking",
       "NIH-compliant recruitment milestone export",
       "IRB-approved promotional asset pack template",
     ],
-    ctaText: "Select Academic Grant Plan",
+    ctaText: "Select Single Grant Plan",
   },
   {
     id: "institution_pro",
     badge: "SITE OPERATIONS & SMOS",
-    name: "Research Site Portfolio",
-    targetAudience: "Multi-study clinical research sites, university departments, and SMOs",
+    name: "Clinical Site Portfolio",
+    targetAudience: "Independent clinical research sites, SMOs, and multi-therapeutic clinics (3–15 studies)",
     price: "$850",
     cadence: "/ month",
     billingNote: "Billed monthly or $7,900 / year prepaid (Save 22%)",
-    description: "Predictable site-wide operations software for independent research clinics and trial centers managing multiple concurrent protocols.",
+    description: "Site-wide operations software for independent research clinics managing multiple concurrent protocols.",
     accent: "sky",
     popular: true,
     features: [
@@ -96,33 +99,33 @@ const plans: PlanDefinition[] = [
   },
   {
     id: "enterprise_pharma",
-    badge: "BIOPHARMA & CROS",
-    name: "Pharma & CRO Performance",
-    targetAudience: "Biopharma sponsors (Phase I–IV), global CROs, and decentralized multi-site trials",
+    badge: "BIOPHARMA SPONSORS & CROS",
+    name: "Commercial Trial Performance",
+    targetAudience: "Biopharma sponsors (Phase I–IV), global CROs, and multi-site trials",
     price: "Performance CPQR",
     cadence: "hybrid milestone model",
     billingNote: "$4,500 base protocol activation + $185–$340 per Qualified Pre-Screened Referral (CPQR)",
     description: "Outcome-aligned recruitment for commercial sponsors who need guaranteed pre-screened pipeline velocity instead of passive listings.",
     accent: "emerald",
     features: [
-      "Unlimited multi-site protocol deployment & geographic routing",
+      "Multi-site protocol deployment & geographic candidate routing",
       "Dedicated recruitment cohort targeting (FDA Diversity Action Plans)",
       "Success-based pricing: Pay only for verified protocol-screened referrals",
-      "Custom CRO / EDC pipeline integrations & direct coordinator handoffs",
+      "Custom CRO / EDC pipeline integrations & coordinator handoffs",
       "Dropout-prevention reminders & participant travel stipend workflow",
       "Dedicated Clinical Recruitment Manager & custom BAA / SLA",
     ],
-    ctaText: "Request Protocol Proposal",
+    ctaText: "Request Trial Proposal",
   },
 ];
 
 export default function ForInstitutions() {
   const [selectedPlan, setSelectedPlan] = useState<"starter_saas" | "institution_pro" | "enterprise_pharma" | "featured_sponsor" | null>(null);
-  const [billingFrequency, setBillingFrequency] = useState<"annual" | "monthly">("annual");
+  const [inquirySubtitle, setInquirySubtitle] = useState<string>("");
   const [orgName, setOrgName] = useState("");
   const [contactName, setContactName] = useState("");
   const [email, setEmail] = useState("");
-  const [trials, setTrials] = useState("3");
+  const [trials, setTrials] = useState("1000");
   const [notes, setNotes] = useState("");
 
   const inquiry = trpc.inquiries.submit.useMutation({
@@ -138,6 +141,12 @@ export default function ForInstitutions() {
     },
     onError: (err) => toast.error(err.message),
   });
+
+  const openInquiry = (plan: "starter_saas" | "institution_pro" | "enterprise_pharma" | "featured_sponsor", subtitle?: string, defaultTrials?: string) => {
+    setSelectedPlan(plan);
+    setInquirySubtitle(subtitle || "");
+    if (defaultTrials) setTrials(defaultTrials);
+  };
 
   const submitInquiry = (e: React.FormEvent) => {
     e.preventDefault();
@@ -161,21 +170,24 @@ export default function ForInstitutions() {
           <div className="max-w-3xl">
             <div className="flex items-center gap-2 flex-wrap mb-4">
               <Badge className="bg-sky-500/15 text-sky-200 border border-sky-400/30 text-xs">
-                Clinical Research Organizations & Study Sites
+                Academic Medical Centers, CTSA Hubs & Health Systems
               </Badge>
               <Badge variant="outline" className="text-emerald-400 border-emerald-500/30 text-xs bg-emerald-950/30">
-                Transparent Outcome-Based Models
+                1,000+ Concurrent Study Campus Licensing
               </Badge>
             </div>
             <h1 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold tracking-tight leading-[1.1] mt-2">
-              Accelerate trial enrollment without unpredictable agency markups.
+              Enterprise clinical recruitment built for university health systems.
             </h1>
             <p className="text-base sm:text-lg text-slate-300 leading-relaxed mt-5 max-w-2xl">
-              StudyLoop replaces antiquated clinical recruitment with an active consumer marketplace: transparent participant stipends, algorithmic matching, dynamic IRB pre-screeners, and verified qualified referrals directly to your study coordinator.
+              From major research universities managing 1,000+ active clinical protocols to single-investigator NIH grants: StudyLoop turns recruitment into an equitable, automated marketplace with transparent stipends, algorithmic matching, and verified coordinator referrals.
             </p>
             <div className="flex flex-col sm:flex-row gap-3 mt-8">
-              <Button onClick={() => setSelectedPlan("institution_pro")} className="bg-sky-600 hover:bg-sky-500 text-white font-bold text-xs h-11 px-6 rounded-xl shadow-lg shadow-sky-600/25">
-                Explore Institutional Plans <ArrowRight className="h-4 w-4 ml-1.5" />
+              <Button 
+                onClick={() => openInquiry("enterprise_pharma", "University Campus Enterprise Agreement (1,000+ Protocols)", "1000")} 
+                className="bg-sky-600 hover:bg-sky-500 text-white font-bold text-xs h-11 px-6 rounded-xl shadow-lg shadow-sky-600/25"
+              >
+                Campus Enterprise License (1,000+ Studies) <ArrowRight className="h-4 w-4 ml-1.5" />
               </Button>
               <Link href="/researchers">
                 <Button variant="outline" className="bg-transparent border-white/20 hover:bg-white/10 hover:text-white text-white text-xs h-11 px-6 rounded-xl">
@@ -212,8 +224,93 @@ export default function ForInstitutions() {
         </div>
       </section>
 
-      {/* Industry Benchmarking Context (Why Legacy Recruitment Fails) */}
-      <section className="container py-12">
+      {/* FLAGSHIP: University Campus-Wide Enterprise License (1,000+ Studies) */}
+      <section className="container pt-12 pb-6">
+        <div className="rounded-3xl bg-slate-900 text-white border border-slate-800 p-6 sm:p-10 shadow-2xl relative overflow-hidden">
+          <div className="absolute top-0 right-0 w-96 h-96 bg-sky-500/10 rounded-full blur-3xl pointer-events-none" />
+          <div className="absolute bottom-0 left-0 w-96 h-96 bg-emerald-500/10 rounded-full blur-3xl pointer-events-none" />
+
+          <div className="relative z-10 space-y-6">
+            <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 border-b border-slate-800 pb-6">
+              <div className="space-y-2">
+                <div className="flex items-center gap-2 flex-wrap">
+                  <Badge className="bg-sky-500 text-white text-[10px] font-extrabold uppercase px-2.5 py-0.5 tracking-wider">
+                    <Landmark className="h-3 w-3 mr-1" />
+                    ACADEMIC MEDICAL CENTERS & CTSA HUBS
+                  </Badge>
+                  <Badge variant="outline" className="border-sky-400/30 text-sky-300 text-[10px] font-semibold">
+                    1,000 to 2,000+ Concurrent Active Studies
+                  </Badge>
+                </div>
+                <h2 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-white">
+                  Campus-Wide Enterprise Health System Agreement
+                </h2>
+                <p className="text-xs sm:text-sm text-slate-300 max-w-2xl leading-relaxed">
+                  Major research universities like <strong>Duke University (~1,800 active studies)</strong>, <strong>Johns Hopkins (~2,000 active studies)</strong>, and <strong>UNC Chapel Hill</strong> manage massive clinical trial volumes across dozens of medical departments. StudyLoop licenses the entire health system campus under a single institutional master agreement—costing less than <strong>$50 per study per year</strong>.
+                </p>
+              </div>
+
+              <div className="bg-slate-950/80 border border-slate-800 rounded-2xl p-5 shrink-0 text-left lg:text-right min-w-[260px] space-y-1">
+                <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Campus Enterprise Annual License</div>
+                <div className="text-3xl sm:text-4xl font-extrabold text-white">$48,000 – $85,000</div>
+                <div className="text-xs text-emerald-400 font-semibold">/ year (Covers all 1,000+ active protocols)</div>
+                <p className="text-[10px] text-slate-400 pt-1">
+                  Amortizes to ~ $40 to $75 / study / year across the institution
+                </p>
+              </div>
+            </div>
+
+            {/* University Feature Highlights Grid */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-2">
+              <div className="p-4 rounded-xl bg-slate-950/60 border border-slate-800 space-y-1.5">
+                <div className="text-xs font-bold text-sky-400 flex items-center gap-1.5">
+                  <GraduationCap className="h-4 w-4" />
+                  Unlimited Institutional Scope
+                </div>
+                <p className="text-xs text-slate-300 leading-relaxed">
+                  Covers all 1,000+ active protocols across Medicine, Oncology, Pediatrics, Neurology, Surgery, and Behavioral Sciences without per-study fees.
+                </p>
+              </div>
+
+              <div className="p-4 rounded-xl bg-slate-950/60 border border-slate-800 space-y-1.5">
+                <div className="text-xs font-bold text-emerald-400 flex items-center gap-1.5">
+                  <Network className="h-4 w-4" />
+                  CTMS, OnCore & Epic Research Sync
+                </div>
+                <p className="text-xs text-slate-300 leading-relaxed">
+                  Automated protocol status syncing with enterprise systems (Advarra OnCore, Epic Research, REDCap) eliminating redundant coordinator data entry.
+                </p>
+              </div>
+
+              <div className="p-4 rounded-xl bg-slate-950/60 border border-slate-800 space-y-1.5">
+                <div className="text-xs font-bold text-amber-400 flex items-center gap-1.5">
+                  <ShieldCheck className="h-4 w-4" />
+                  Campus-Wide Diversity Analytics
+                </div>
+                <p className="text-xs text-slate-300 leading-relaxed">
+                  Centralized institutional reporting meeting federal FDA Diversity Action Plan and NIH inclusion guidelines across all trial departments.
+                </p>
+              </div>
+            </div>
+
+            <div className="flex flex-col sm:flex-row items-center justify-between gap-4 pt-2">
+              <div className="text-xs text-slate-400 flex items-center gap-2">
+                <CheckCircle2 className="h-4 w-4 text-emerald-400 shrink-0" />
+                <span>Includes InCommon / Duo SSO, Net-60 institutional procurement, W-9 vendor onboarding, and custom university BAA.</span>
+              </div>
+              <Button
+                onClick={() => openInquiry("enterprise_pharma", "University Campus Enterprise Agreement (1,000+ Protocols)", "1000")}
+                className="bg-sky-500 hover:bg-sky-400 text-slate-950 font-extrabold text-xs h-10 px-6 rounded-xl shrink-0 cursor-pointer shadow-lg shadow-sky-500/20"
+              >
+                Request Campus Enterprise Proposal (1,000+ Studies) <ArrowRight className="h-4 w-4 ml-1.5" />
+              </Button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Industry Benchmarking Context */}
+      <section className="container py-8">
         <div className="text-center max-w-2xl mx-auto space-y-2">
           <Badge variant="outline" className="text-xs bg-slate-100 text-slate-700 border-slate-300">
             Market Economics Benchmark
@@ -222,7 +319,7 @@ export default function ForInstitutions() {
             The True Cost of Clinical Recruitment Delays
           </h2>
           <p className="text-xs sm:text-sm text-slate-600 leading-relaxed">
-            Data from the Tufts Center for the Study of Drug Development (Tufts CSDD) underscores why traditional recruitment models are broken for both academic centers and commercial sponsors.
+            Data from the Tufts Center for the Study of Drug Development (Tufts CSDD) underscores why traditional recruitment models fail both academic centers and commercial sponsors.
           </p>
         </div>
 
@@ -262,17 +359,17 @@ export default function ForInstitutions() {
         </div>
       </section>
 
-      {/* Main Pricing Matrix */}
+      {/* Granular Plans: Individual PIs, Sites, and Commercial Trials */}
       <section className="container py-8">
         <div className="text-center max-w-2xl mx-auto space-y-2">
           <Badge variant="outline" className="text-xs bg-sky-50 border-sky-200 text-sky-700 font-semibold">
-            Institutional Pricing & Licensing Models
+            Modular Protocol & Site Licensing
           </Badge>
           <h2 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-slate-950">
-            Engineered for Academic Grants, Sites, and Biopharma
+            Flexible Plans for Individual Grants, Sites, and Sponsors
           </h2>
           <p className="text-xs sm:text-sm text-slate-600 leading-relaxed">
-            Choose the model that fits your institutional procurement workflow: fixed-term grant invoices, site-wide monthly subscriptions, or performance-based CPQR agreements.
+            Need recruitment for a single NIH grant protocol or a dedicated clinical research site? Choose a plan below:
           </p>
         </div>
 
@@ -322,7 +419,7 @@ export default function ForInstitutions() {
                 </div>
 
                 <Button
-                  onClick={() => setSelectedPlan(plan.id)}
+                  onClick={() => openInquiry(plan.id, `${plan.name} (${plan.price})`, plan.id === "starter_saas" ? "1" : plan.id === "institution_pro" ? "5" : "15")}
                   className={`mt-6 w-full text-xs h-10 font-bold cursor-pointer rounded-xl ${
                     plan.popular
                       ? "bg-sky-600 hover:bg-sky-700 text-white shadow-md shadow-sky-600/20"
@@ -400,7 +497,7 @@ export default function ForInstitutions() {
               </div>
             </div>
             <Button
-              onClick={() => setSelectedPlan("featured_sponsor")}
+              onClick={() => openInquiry("featured_sponsor", "30-Day Protocol Enrollment Sprint ($1,200)")}
               variant="outline"
               className="mt-2 w-full text-xs h-9 border-amber-300 text-amber-900 hover:bg-amber-50 font-bold cursor-pointer"
             >
@@ -439,7 +536,7 @@ export default function ForInstitutions() {
             </div>
             <h4 className="font-bold text-sm text-slate-900 mt-2">University PO & Modular Invoicing</h4>
             <p className="text-xs text-slate-500 leading-relaxed">
-              Direct institutional procurement support: we provide W-9s, vendor registration, and Net-30 purchase order billing for university accounting systems.
+              Direct institutional procurement support: we provide W-9s, vendor registration, and Net-30/Net-60 purchase order billing for university accounting systems.
             </p>
           </div>
         </div>
@@ -471,13 +568,15 @@ export default function ForInstitutions() {
                 <span>
                   Selected Plan:{" "}
                   <strong>
-                    {selectedPlan === "starter_saas"
-                      ? "Academic & Grant Protocol ($1,850 / 6-mo license)"
-                      : selectedPlan === "institution_pro"
-                      ? "Research Site Portfolio ($850 / month)"
-                      : selectedPlan === "enterprise_pharma"
-                      ? "Biopharma & CRO Performance (CPQR Model)"
-                      : "Sponsored Protocol Sprint ($1,200 / 30-day)"}
+                    {inquirySubtitle || (
+                      selectedPlan === "starter_saas"
+                        ? "Single Grant Protocol ($1,850 / 6-mo license)"
+                        : selectedPlan === "institution_pro"
+                        ? "Clinical Site Portfolio ($850 / month)"
+                        : selectedPlan === "enterprise_pharma"
+                        ? "Commercial Trial Performance (CPQR Model)"
+                        : "Sponsored Protocol Sprint ($1,200 / 30-day)"
+                    )}
                   </strong>
                 </span>
               </div>
@@ -490,7 +589,7 @@ export default function ForInstitutions() {
                     value={orgName}
                     onChange={(e) => setOrgName(e.target.value)}
                     className="h-9 text-xs"
-                    placeholder="e.g. Duke Health / Triangle Research Site"
+                    placeholder="e.g. Duke Health / UNC School of Medicine"
                   />
                 </div>
                 <div className="space-y-1">
@@ -500,7 +599,7 @@ export default function ForInstitutions() {
                     value={contactName}
                     onChange={(e) => setContactName(e.target.value)}
                     className="h-9 text-xs"
-                    placeholder="e.g. Dr. H. Whitman / Sarah Lindquist"
+                    placeholder="e.g. Vice Dean of Research / CTSA Director"
                   />
                 </div>
               </div>
@@ -513,34 +612,35 @@ export default function ForInstitutions() {
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   className="h-9 text-xs"
-                  placeholder="contact@university.edu or site@clinicalops.org"
+                  placeholder="name@duke.edu or clinicalops@healthsystem.org"
                 />
               </div>
 
               <div className="space-y-1">
-                <Label className="text-xs font-semibold text-slate-700">Concurrent Active Protocols</Label>
+                <Label className="text-xs font-semibold text-slate-700">Concurrent Active Protocols Across Institution</Label>
                 <Select value={trials} onValueChange={setTrials}>
                   <SelectTrigger className="h-9 text-xs">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="1">1 active study (Academic PI)</SelectItem>
-                    <SelectItem value="3">2–5 studies (Department or Clinical Site)</SelectItem>
-                    <SelectItem value="10">6–15 studies (Multi-Specialty Site / SMO)</SelectItem>
-                    <SelectItem value="25">15+ studies (Enterprise Pharma / Multi-Site CRO)</SelectItem>
+                    <SelectItem value="1000">1,000+ studies (Major Research University / CTSA Hub)</SelectItem>
+                    <SelectItem value="250">100–500 studies (Academic Medical Center / Health System)</SelectItem>
+                    <SelectItem value="25">15–50 studies (Multi-Site Trial / Large SMO)</SelectItem>
+                    <SelectItem value="5">2–10 studies (Clinical Site / Department)</SelectItem>
+                    <SelectItem value="1">1 study (Individual Academic PI Grant)</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
 
               <div className="space-y-1">
                 <Label className="text-xs font-semibold text-slate-700">
-                  Target Therapeutic Area or Recruitment Challenge (Optional)
+                  Target Therapeutic Area or Institutional Requirements (Optional)
                 </Label>
                 <Textarea
                   value={notes}
                   onChange={(e) => setNotes(e.target.value)}
                   className="text-xs min-h-20"
-                  placeholder="e.g. Need rural healthy controls, improve male representation, Phase II GLP-1 candidate screening..."
+                  placeholder="e.g. OnCore CTMS integration, InCommon Duo SSO, rural NC participant representation, FDA Diversity Action Plan..."
                 />
               </div>
 
