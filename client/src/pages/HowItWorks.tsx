@@ -368,7 +368,7 @@ export default function HowItWorks() {
                 </Link>
                 <Link href="/for-institutions">
                   <Button variant="outline" className="bg-white/10 hover:bg-white/20 text-white border-white/20 h-11 px-6 text-xs rounded-xl">
-                    Institutional SaaS Pricing
+                    Institutional Pricing & Models
                   </Button>
                 </Link>
               </div>
