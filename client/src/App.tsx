@@ -10,6 +10,9 @@ import Home from "@/pages/Home";
 import ResearcherPortal from "@/pages/ResearcherPortal";
 import StudyDetail from "@/pages/StudyDetail";
 import UniversalProfile from "@/pages/UniversalProfile";
+import MyStudies from "@/pages/MyStudies";
+import PrivacySettings from "@/pages/PrivacySettings";
+import AdminOperations from "@/pages/AdminOperations";
 import ParticipantDashboard from "@/pages/ParticipantDashboard";
 import Login from "@/pages/Login";
 import InstitutionLogin from "@/pages/InstitutionLogin";
@@ -33,7 +36,11 @@ function Router() {
       <Route path="/about" component={AboutUs} />
       <Route path="/about-us" component={AboutUs} />
       <Route path="/profile" component={UniversalProfile} />
-      <Route path="/dashboard" component={ParticipantDashboard} />
+      <Route path="/my-studies" component={MyStudies} />
+      <Route path="/dashboard" component={MyStudies} />
+      <Route path="/settings/privacy-notifications" component={PrivacySettings} />
+      <Route path="/settings" component={PrivacySettings} />
+      <Route path="/admin" component={AdminOperations} />
       <Route path="/login" component={Login} />
       <Route path="/institution/login" component={InstitutionLogin} />
       <Route path="/institution-login" component={InstitutionLogin} />
