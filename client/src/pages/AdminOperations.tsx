@@ -229,13 +229,12 @@ export default function AdminOperations() {
                           ${study.compensationAmount}
                         </div>
                         <div className="col-span-2">
-                          <Badge 
-                            variant="outline" 
-                            className={`text-[10px] capitalize ${
-                              study.status === "recruiting" 
-                                ? "bg-emerald-50 text-emerald-700 border-emerald-300" 
+                          <Badge
+                            variant="outline"
+                            className={`text-[10px] capitalize ${study.status === "recruiting"
+                                ? "bg-emerald-50 text-emerald-700 border-emerald-300"
                                 : "bg-slate-100 text-slate-600 border-slate-200"
-                            }`}
+                              }`}
                           >
                             {study.status}
                           </Badge>
@@ -415,9 +414,9 @@ export default function AdminOperations() {
                       Under StudyLoop Trust & Privacy Charter, participants can request an export of all qualification data or initiate account deletion.
                     </p>
                   </div>
-                  <Button 
-                    variant="outline" 
-                    size="sm" 
+                  <Button
+                    variant="outline"
+                    size="sm"
                     onClick={() => toast.info("No pending data deletion requests in queue.")}
                     className="h-8 text-xs shrink-0"
                   >
@@ -432,9 +431,9 @@ export default function AdminOperations() {
                       Participant flags regarding misleading compensation, inactive clinic sites, or communication issues.
                     </p>
                   </div>
-                  <Button 
-                    variant="outline" 
-                    size="sm" 
+                  <Button
+                    variant="outline"
+                    size="sm"
                     onClick={() => toast.info("No study flags currently reported.")}
                     className="h-8 text-xs shrink-0"
                   >
